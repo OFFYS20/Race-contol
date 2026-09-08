@@ -6,6 +6,7 @@
 --bg:var(--paper);--panel:var(--paper);--line:var(--rule);
 color-scheme:light;font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;font-size:15px}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{height:100%}
 body{margin:0;background:var(--paper);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased;
 background-image:linear-gradient(var(--rule) 1px,transparent 1px),linear-gradient(90deg,var(--rule) 1px,transparent 1px);
@@ -216,9 +217,11 @@ details>div,details>p,details>label{margin:0 10px}
 
 /* radio */
 .radio{grid-area:radio}
-.radio-tabs{display:flex;gap:0;border-bottom:1px solid var(--rule)}
-.radio-tabs button{flex:1;border:0;border-right:1px solid var(--rule);min-height:30px;font-size:.6875rem}
-.radio-tabs button:last-child{border-right:0}
+.radio-tabs{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--rule)}
+.radio-tabs button{border:0;border-right:1px solid var(--rule);border-top:1px solid var(--rule);
+ min-height:28px;padding:5px 2px;font-size:.625rem;letter-spacing:.04em}
+.radio-tabs button:nth-child(-n+3){border-top:0}
+.radio-tabs button:nth-child(3n){border-right:0}
 .radio-tabs .active{background:var(--ink);color:var(--paper)}
 #comms{height:400px;overflow:auto;padding:0 12px}
 .message{border-bottom:1px solid var(--rule);padding:9px 0}
@@ -226,6 +229,9 @@ details>div,details>p,details>label{margin:0 10px}
 .message h3{font-family:"IBM Plex Mono",monospace;font-size:.625rem;line-height:1.4;color:var(--indigo);
  letter-spacing:.1em;text-transform:uppercase;margin:4px 0}
 .message p{font-size:.8125rem;line-height:1.5;color:var(--ink-2)}
+.message.rcm h3{color:var(--muted);font-size:.5625rem}
+.message.rcm p.mono{font-family:"IBM Plex Mono",monospace;font-size:.6875rem;line-height:1.5;
+ letter-spacing:.02em;color:var(--ink)}
 
 .disclaimer{font-size:.6875rem;color:var(--muted);padding:0 24px 20px;line-height:1.5;
  max-width:80ch;font-family:"IBM Plex Mono",monospace}
@@ -318,7 +324,7 @@ dialog{width:calc(100% - 16px);max-height:94dvh}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style></head><body>
 <header class="mast"><div class="brand"><span class="mark">RC</span><div><h1>AEGIS <span>RACE CONTROL</span></h1><p id="circuit-line">JEDDAH CORNICHE · SAUDI ARABIAN GP</p></div></div><div class="session"><span id="phase">FORMATION READY</span><b id="lap">LAP 01 / 50</b><span id="clock">00:00</span><span class="flag" id="flag">GREEN</span></div></header>
-<div class="toolbar"><button class="primary" id="play">Run</button><label>Pace <select id="rate"><option value="1">1×</option><option value="4" selected>4×</option><option value="8">8×</option><option value="16">16×</option><option value="32">32×</option></select></label><label>Circuit <select id="circuit"><option value="jeddah">Jeddah · Saudi Arabia</option><option value="silverstone">Silverstone · Great Britain</option><option value="monaco">Monaco · Monte Carlo</option></select></label><label class="scenario-label">Scenario <select id="scenario"><option value="1">01 · Formation & grid</option><option value="2">02 · Unsafe release</option><option value="3">03 · Apex dispute</option><option value="4">04 · Impact & restart</option><option value="5">05 · Weather emergency</option></select></label><button id="load">Checkpoint</button><span class="legend">Offline edition</span><button id="script" class="small">Script</button><button id="help" class="small" aria-label="Open operating guide">Guide</button></div>
+<div class="toolbar"><button class="primary" id="play">Run</button><label>Pace <select id="rate"><option value="1">1×</option><option value="4" selected>4×</option><option value="8">8×</option><option value="16">16×</option><option value="32">32×</option></select></label><label>Circuit <select id="circuit"><option value="jeddah">Jeddah · Saudi Arabia</option><option value="miami">Miami · United States</option><option value="monaco">Monaco · Monte Carlo</option><option value="silverstone">Silverstone · Great Britain</option><option value="zandvoort">Zandvoort · Netherlands</option><option value="cota">Austin · United States</option><option value="interlagos">Sao Paulo · Brazil</option><option value="vegas">Las Vegas · United States</option></select></label><label class="scenario-label">Scenario <select id="scenario"><option value="1">01 · Formation & grid</option><option value="2">02 · Unsafe release</option><option value="3">03 · Apex dispute</option><option value="4">04 · Impact & restart</option><option value="5">05 · Weather emergency</option></select></label><button id="load">Checkpoint</button><span class="legend">Offline edition</span><button id="script" class="small">Script</button><button id="help" class="small" aria-label="Open operating guide">Guide</button></div>
 <nav class="flags" aria-label="Race flags"><span>Track signal</span><button data-command="GREEN" class="green">Green</button><button data-command="YELLOW" class="yellow">Yellow</button><button data-command="VSC">VSC</button><button data-command="SC" class="amber">Safety car</button><button data-command="RED" class="red">Red</button></nav>
 <main class="deck" data-view="track">
 <section class="panel tower" data-mobile="track"><div class="panel-head"><h2>Timing</h2><span>LIVE</span></div><div class="tower-head"><span>POS / CAR</span><span>INTERVAL</span></div><div id="timing"></div><div class="tower-foot" id="tower-note"><span>Click a car to inspect its decisions.</span></div></section>
@@ -326,23 +332,27 @@ dialog{width:calc(100% - 16px);max-height:94dvh}
 <section class="cameras" data-mobile="track"><div class="panel"><div class="panel-head"><h2>Corner cam</h2><span id="corner-meta">—</span></div><div id="corner" class="camera"></div></div><div class="panel"><div class="panel-head"><h2>Pit lane</h2><span id="pit-light">EXIT RED</span></div><div id="pitcam" class="camera"></div></div></section>
 <section class="panel control" data-mobile="control"><div class="panel-head"><h2>Console</h2><span>HUMAN AUTHORITY</span></div><div class="next"><span>NEXT OPERATION</span><h3 id="next-title">Begin formation</h3><p id="next-copy">The field is ready. Car 41 will start from the pit lane.</p><button id="next" class="primary wide" data-command="formation">Begin formation lap</button></div><details><summary>Start &amp; pit protocol</summary><div class="button-grid"><button data-command="grid">Verify Car 12</button><button data-command="lights">Arm grid lights</button><button data-command="pit">Pit exit green</button></div></details><details><summary>Recovery &amp; Safety Car</summary><div class="button-grid"><button data-command="medical">Dispatch medical</button><button data-command="repair">Authorise repair</button><button data-command="unlap">Unlap eligible cars</button><button data-command="scin">SC in this lap</button></div><p class="status-line" id="recovery-state">Medical cover available · circuit clear</p></details><details><summary>Weather &amp; resumption</summary><label class="weather-control">Surface water <input id="weather" type="range" min="0" max="100" value="0"><span id="water">Dry</span></label><div class="button-grid"><button data-command="standing">Standing restart</button><button data-command="rolling">Rolling restart</button><button data-command="finish">No resumption / results</button></div></details><div class="panel-head inset"><h2>StewardAI</h2><span>PRE-SCREEN ONLY</span></div><div id="incidents"></div><button class="wide ledger" id="documents">Documents <span id="document-count">0</span></button><button class="wide ledger" id="championship">Championship <span id="race-count">0</span></button></section>
 <section class="panel telemetry" data-mobile="telemetry"><div class="panel-head"><h2>Telemetry</h2><div class="selectors"><label>Car <select id="car-select"></select></label><label>Compare <select id="compare-select"></select></label></div></div><div class="telemetry-layout"><div><div class="metrics" id="metrics"></div><div class="traces" id="traces"></div></div><div class="data-column"><h3>Biometric & impact</h3><div id="medical"></div><h3>Tyres &amp; strategy</h3><div id="technical"></div></div></div><div class="decision-card"><span>AUTONOMOUS DRIVER POLICY</span><h3 id="decision-title">Holding formation</h3><p id="decision-reason">Awaiting the director's signal.</p><div id="utilities"></div></div></section>
-<section class="panel radio" data-mobile="radio"><div class="panel-head"><h2>Comms</h2><span>7 ch</span></div><div class="radio-tabs"><button data-comms="team" class="active">Team radio</button><button data-comms="radio">Race control</button><button data-comms="fia">FIA</button><button data-comms="ai">Decisions</button></div><label class="comms-filter" id="team-filter-row">Team <select id="team-filter"><option value="">All teams</option></select></label>
+<section class="panel radio" data-mobile="radio"><div class="panel-head"><h2>Comms</h2><span>7 ch</span></div><div class="radio-tabs"><button data-comms="team" class="active">Team</button><button data-comms="radio">Messages</button><button data-comms="ops">Control</button><button data-comms="fia">FIA</button><button data-comms="ai">Decisions</button></div><label class="comms-filter" id="team-filter-row">Team <select id="team-filter"><option value="">All teams</option></select></label>
 <div class="fia-compose" id="fia-compose" hidden>
  <label>To <select id="fia-to"></select></label>
  <label>Call <select id="fia-action">
   <option value="note">Message</option>
   <option value="warning">Driving standards warning</option>
   <option value="bw">Black-and-white flag</option>
-  <option value="investigate">Note · under investigation</option>
-  <option value="penalty5">Penalty · 5 seconds</option>
-  <option value="penalty10">Penalty · 10 seconds</option>
+  <option value="investigate">Note incident · refer to stewards</option>
+  <option value="bo">Black-and-orange flag</option>
+  <option value="penalty5">Stewards · 5 second penalty</option>
+  <option value="penalty10">Stewards · 10 second penalty</option>
+  <option value="drivethrough">Stewards · drive-through</option>
+  <option value="stopgo">Stewards · 10s stop-and-go</option>
+  <option value="reprimand">Stewards · reprimand</option>
   <option value="summon">Summon team principal</option>
  </select></label>
  <input id="fia-text" type="text" placeholder="Optional wording" maxlength="140">
  <button id="fia-send" class="primary wide">Transmit</button>
 </div><div id="comms"></div></section>
 </main><nav class="mobile-nav" aria-label="Command deck panels"><button data-tab="track" class="active">Track</button><button data-tab="control">Control <span id="alert-count"></span></button><button data-tab="telemetry">Telemetry</button><button data-tab="radio">Radio</button></nav>
-<footer class="disclaimer">JEDDAH CORNICHE, SILVERSTONE &amp; MONACO · Centrelines from the surveyed f1-circuits traces · Lap model calibrated to published Brembo braking data · 2026 grid, drivers and numbers as announced · FICTIONAL FIA-INSPIRED SIMULATOR · Local utility-based game AI · Synthetic camera, radio and biometric data · Sporting decisions require your review.</footer><div id="toast" role="status" aria-live="polite"></div><dialog id="modal"><div class="modal-head"><h2 id="modal-title"></h2><button id="close-modal" aria-label="Close dialog">✕ Close</button></div><div id="modal-body"></div></dialog>
+<footer class="disclaimer">EIGHT CIRCUITS · Centrelines from the surveyed f1-circuits traces, each calibrated to its own lap record · Lap model calibrated to published Brembo braking data · 2026 grid, drivers and numbers as announced · FICTIONAL FIA-INSPIRED SIMULATOR · Local utility-based game AI · Synthetic camera, radio and biometric data · Sporting decisions require your review.</footer><div id="toast" role="status" aria-live="polite"></div><dialog id="modal"><div class="modal-head"><h2 id="modal-title"></h2><button id="close-modal" aria-label="Close dialog">✕ Close</button></div><div id="modal-body"></div></dialog>
 <script>
 (()=>{
 const CHANNELS=['RACE DIRECTOR','DEPUTY DIRECTOR / MARSHAL LEAD','TELEMETRY & SCRUTINEER ENGINEER','CHIEF MEDICAL OFFICER (CMO)','SAFETY CAR DRIVER','TEAM PRINCIPAL','TEAM STRATEGY'];
@@ -366,17 +376,17 @@ const TEAMS=[
  {id:'CAD',name:'Cadillac',colour:'#A88320'}
 ];
 const GRID2026=[
- [1,'Norris','MCL'],[81,'Piastri','MCL'],
- [16,'Leclerc','FER'],[44,'Hamilton','FER'],
- [3,'Verstappen','RBR'],[6,'Hadjar','RBR'],
- [63,'Russell','MER'],[12,'Antonelli','MER'],
- [14,'Alonso','AST'],[18,'Stroll','AST'],
- [55,'Sainz','WIL'],[23,'Albon','WIL'],
- [27,'Hulkenberg','AUD'],[5,'Bortoleto','AUD'],
- [10,'Gasly','ALP'],[43,'Colapinto','ALP'],
- [31,'Ocon','HAA'],[87,'Bearman','HAA'],
- [30,'Lawson','VRB'],[41,'Lindblad','VRB'],
- [11,'Perez','CAD'],[77,'Bottas','CAD']
+ [1,'Norris','NOR','MCL'],[81,'Piastri','PIA','MCL'],
+ [16,'Leclerc','LEC','FER'],[44,'Hamilton','HAM','FER'],
+ [3,'Verstappen','VER','RBR'],[6,'Hadjar','HAD','RBR'],
+ [63,'Russell','RUS','MER'],[12,'Antonelli','ANT','MER'],
+ [14,'Alonso','ALO','AST'],[18,'Stroll','STR','AST'],
+ [55,'Sainz','SAI','WIL'],[23,'Albon','ALB','WIL'],
+ [27,'Hulkenberg','HUL','AUD'],[5,'Bortoleto','BOR','AUD'],
+ [10,'Gasly','GAS','ALP'],[43,'Colapinto','COL','ALP'],
+ [31,'Ocon','OCO','HAA'],[87,'Bearman','BEA','HAA'],
+ [30,'Lawson','LAW','VRB'],[41,'Lindblad','LIN','VRB'],
+ [11,'Perez','PER','CAD'],[77,'Bottas','BOT','CAD']
 ];
 const lighten=(hex,k)=>{
  const n=parseInt(hex.slice(1),16),r=n>>16,g=n>>8&255,b=n&255;
@@ -434,6 +444,61 @@ const CIRCUITS={
   drs:[{det:.955,from:.985,to:.055}],
   sectors:[0,.330,.670],
   pts:[[339.8,267.3],[329.6,276.3],[316.8,281.1],[303.2,283.1],[289.5,283.7],[275.8,284],[262.1,284.5],[248.4,285.1],[234.7,285.7],[221,286.3],[207.3,287],[193.5,287.7],[179.8,288.4],[166.1,289.1],[152.4,289.8],[138.7,290.2],[125.6,286.7],[118.4,275.5],[119.8,262.1],[127.2,250.7],[136.2,240.3],[132.2,229.3],[123.8,232.7],[110.9,236.1],[98.3,231],[86.7,223.7],[75,216.5],[63.7,208.7],[55.8,197.7],[58.6,184.7],[68.1,174.9],[78.8,166.4],[89.9,158.3],[101.1,150.4],[112.5,142.7],[124.1,135.4],[135.8,128.2],[147.7,121.4],[159.6,114.7],[171.8,108.3],[184,102.1],[196.5,96.4],[209.2,91.2],[222.2,86.7],[235.4,83],[248.8,80.1],[262.3,78],[276,76.5],[289.7,75.8],[303.4,75.7],[317.1,75.8],[330.8,76.1],[344.5,77.1],[358.1,79.1],[371.4,82.5],[384.4,86.9],[397.2,91.9],[409.8,97.1],[422.4,102.7],[434.8,108.5],[447.2,114.3],[459.6,120.2],[472,126.1],[484.2,132.3],[496.2,138.9],[508,146],[519.5,153.5],[530.7,161.5],[541.6,169.7],[552.4,178.1],[563.1,186.8],[573.4,195.8],[583.6,205],[594,214],[606.4,219.4],[620.1,218.6],[632.8,222.8],[640.6,234],[647.2,246],[656.2,256.3],[666,265.9],[676,275.3],[686.1,284.6],[696.1,293.9],[706.2,303.3],[716.3,312.6],[726.3,321.9],[736.4,331.2],[746.5,340.5],[756.7,349.7],[766.9,358.9],[777.1,368.1],[787.4,377.1],[799.1,384.2],[812.6,385.6],[826.1,383],[839.3,379.4],[852.4,375.2],[865,369.9],[877.2,363.6],[888.8,356.3],[899.9,348.2],[910.6,339.7],[920.8,330.4],[928.3,319],[930.8,305.6],[931.9,292],[936.6,279.1],[944.9,268.3],[954,258],[963.1,247.8],[972.2,237.5],[981.2,227.1],[990,216.6],[998.7,206],[1008.7,196.7],[1021.8,193.8],[1035.5,193.6],[1046.8,186.2],[1054.8,175.1],[1061.9,163.3],[1068.4,151.2],[1074.2,138.8],[1079,126],[1082.8,112.8],[1085.4,99.3],[1086.4,85.6],[1085.2,72],[1082.5,58.5],[1081.2,44.9],[1086.8,32.7],[1099.7,30.4],[1111.8,36.7],[1122.6,45.1],[1132.9,54.2],[1141.7,64.7],[1146,77.5],[1141.7,90.4],[1134.4,101.9],[1129.4,114.7],[1126.1,128],[1122.3,141.2],[1117.9,154.2],[1112.9,166.9],[1106.6,179.1],[1099.3,190.8],[1091.7,202.2],[1084,213.5],[1076.2,224.8],[1068.3,236],[1060.3,247.2],[1052.3,258.3],[1044,269.2],[1035.3,279.8],[1026.2,290.1],[1017,300.3],[1007.7,310.4],[998.3,320.4],[988.7,330.2],[979,339.9],[969.1,349.3],[958.9,358.6],[948.5,367.4],[937.7,376],[926.8,384.2],[915.6,392.2],[904.2,399.8],[892.4,406.8],[880,412.7],[867.3,417.9],[854.8,423.4],[843,430.5],[831.6,438.1],[818.4,439.9],[806.5,433.3],[796.4,424],[786.8,414.2],[777,404.6],[767,395.1],[757,385.8],[746.7,376.7],[736,368.1],[724.9,360.1],[713.6,352.3],[702.2,344.7],[690.8,337],[679.5,329.2],[668.3,321.3],[657.3,313.1],[646.7,304.4],[636.6,295.2],[626.8,285.5],[616.8,276.2],[605.6,268.2],[593.6,261.7],[581.2,255.7],[568.8,249.9],[556.4,244],[544.1,237.8],[532.3,231],[521,223.2],[510.2,214.6],[499.9,205.6],[489.8,196.3],[479.7,187],[469.3,178.1],[458,170.4],[445.6,164.4],[432.5,160.6],[418.8,159],[405.2,159.4],[391.9,162.6],[379.9,169.3],[369.8,178.5],[361.3,189.3],[354.4,201.1],[349.8,214],[348.2,227.6],[347.5,241.3],[345.4,254.9]]
+ },
+ interlagos:{
+  key:'interlagos',name:'Autodromo Jose Carlos Pace',country:'Brazil',
+  event:'SAO PAULO GRAND PRIX',km:4.309,length:4309,corners:15,laps:71,
+  record:'1:10.540',recordBy:'Bottas, 2018',pole:'1:10.727',
+  view:[1200,660],label:[230,356],lights:[20,580],
+  pitSide:-1,minRadius:65,curvStencil:6,
+  pit:{in:.930,out:.020,taper:.020},
+  drs:[{det:0.139,from:0.181,to:0.31},{det:0.829,from:0.871,to:0.045}],
+  sectors:[0,0.366,0.64],
+  pts:[[395.4,85.2],[379.5,89.1],[363.5,93],[347.6,96.9],[331.7,100.8],[315.8,104.8],[299.9,108.7],[283.9,112.6],[268,116.6],[252.1,120.5],[236.2,124.5],[220.3,128.4],[204.4,132.4],[188.5,136.3],[173.4,142.5],[160.4,152.1],[150.9,165.2],[146.1,180.4],[143.8,196],[147.8,211.3],[155,225.4],[161.6,240.2],[164.6,256.2],[162.7,272.4],[156.4,287.4],[148.6,301.8],[142.8,317.2],[139,333.1],[137.1,349.4],[137.6,365.7],[140.1,381.9],[144.5,397.7],[151,412.7],[159.6,426.7],[169.7,439.5],[181.4,451.1],[194.4,461],[208.4,469.5],[223.3,476.4],[238.7,482],[254.3,487.1],[269.9,492],[285.6,496.8],[301.3,501.5],[317,506.1],[332.9,510.3],[348.7,514.5],[364.6,518.7],[380.4,523],[396.2,527.2],[412.1,531.5],[427.9,535.6],[443.8,539.7],[459.7,543.8],[475.6,547.8],[491.4,551.9],[507.3,556],[523.2,560.2],[539,564.5],[554.8,568.8],[570.6,573.1],[586.4,577.5],[602.2,581.9],[618,586.3],[633.8,590.6],[649.6,595],[665.4,599.4],[681.2,603.7],[697,608],[712.9,612.4],[728.7,616.7],[744.5,621.1],[760.4,624.9],[776.6,624.2],[792.1,619.1],[805.8,610.2],[816.3,597.8],[822.8,582.8],[826.3,566.8],[829.7,550.7],[832.9,534.7],[835.2,518.4],[835.3,502.1],[833.3,485.8],[828.8,470.1],[821.1,455.6],[812.3,441.8],[801.5,429.5],[789.3,418.6],[776.5,408.3],[763.6,398.3],[750.5,388.3],[737.5,378.4],[724.4,368.5],[711.2,358.7],[698.1,349],[684.8,339.3],[671.5,329.8],[658.2,320.2],[644.8,310.7],[631.5,301.1],[618.4,291.3],[605.4,281.2],[592.5,271.1],[579.5,261.2],[566.2,251.5],[553.2,241.6],[542,229.7],[534.5,215.2],[531.3,199.2],[531.3,182.8],[533.2,166.6],[537.8,150.8],[544.7,136],[553.4,122.1],[565.4,111.1],[580,103.7],[595.8,99.4],[611.8,95.8],[627.9,92.4],[644,90.1],[659.9,92],[674.4,97.2],[685.4,106.2],[694.9,116],[699.4,128.6],[704.8,140.8],[707,153.9],[715.5,163.4],[724,172.6],[734.4,178.7],[746.9,182.2],[760.4,183.5],[775.4,180.5],[790,173.5],[802.9,163.7],[818.1,157.9],[834.3,157.8],[849.4,164],[859.7,176.5],[863.5,192.2],[860.6,208.3],[852.7,222.4],[843.1,235.7],[836.7,250.7],[833.4,266.8],[832.4,283.1],[834,299.4],[838.5,315.1],[846.2,329.6],[856.2,342.6],[868.6,353.3],[881.8,362.9],[895.5,372],[909.3,380.8],[923.2,389.5],[937.2,398.1],[951.2,406.6],[965.1,415.3],[979.4,422.9],[995.4,426.4],[1011.6,425.4],[1027,419.8],[1040.2,410.2],[1050.3,397.4],[1056.7,382.3],[1062.7,367.1],[1068.4,351.7],[1072.3,335.8],[1072.3,319.5],[1070.2,303.2],[1067.5,287],[1064.5,270.9],[1061.1,254.9],[1056.9,239.1],[1051.2,223.7],[1045,208.5],[1038.6,193.4],[1031.5,178.6],[1023.8,164.2],[1015.4,150.1],[1005.4,137.1],[994.5,124.9],[982.6,113.6],[969.2,104.2],[954.6,96.7],[939.3,90.7],[923.7,85.8],[907.9,81.4],[892.1,77.2],[876.2,73.2],[860.2,69.4],[844.1,66.2],[828,63.5],[811.8,60.6],[795.9,56.6],[780.2,52.1],[764.3,47.8],[748.4,44],[732.5,40.2],[716.7,35.6],[700.7,32],[684.4,30.4],[668,30],[651.7,30.4],[635.3,31.6],[619.1,33.9],[603,37.1],[587,40.7],[571.1,44.7],[555.2,48.5],[539.2,52.2],[523.2,55.8],[507.2,59.4],[491.2,63],[475.2,66.6],[459.2,70.2],[443.2,73.9],[427.3,77.6],[411.3,81.4]]
+ },
+ cota:{
+  key:'cota',name:'Circuit of the Americas',country:'United States',
+  event:'UNITED STATES GRAND PRIX',km:5.513,length:5513,corners:20,laps:56,
+  record:'1:36.169',recordBy:'Leclerc, 2019',pole:'1:32.330',
+  view:[1200,509],label:[850,468],lights:[420,426],
+  pitSide:-1,minRadius:50,curvStencil:13,
+  pit:{in:.930,out:.020,taper:.020},
+  drs:[{det:0.473,from:0.515,to:0.63},{det:0.949,from:0.991,to:0.031}],
+  sectors:[0,0.346,0.692],
+  pts:[[170.3,313.4],[177.1,325.1],[183.9,336.8],[190.6,348.5],[197.3,360.3],[204.1,372],[210.8,383.8],[217.5,395.5],[224.4,407.2],[231.3,418.8],[238.5,430.3],[247.8,439.8],[260.5,443.9],[273.7,441.9],[284.3,433.8],[290.5,422],[291.1,408.5],[291.6,395],[292.3,381.5],[294.2,368.1],[298.5,355.3],[305.3,343.6],[314.1,333.4],[324.8,325.1],[336.7,318.8],[349.8,315.3],[363.1,312.9],[376.4,310.4],[389.7,307.9],[403,305.5],[416.3,303],[429.6,300.6],[442.9,298.2],[455.9,294.4],[467.6,287.6],[477.7,278.6],[486.6,268.4],[496.6,259.5],[508.8,253.7],[522.2,252],[535.7,251.7],[549.1,249.6],[560.8,243.1],[569,232.4],[575.8,220.6],[583.1,209.3],[592.7,199.8],[604,192.4],[616.5,187.4],[629.7,184.3],[643.2,183.3],[656.5,185.3],[668.7,191.1],[678.9,199.9],[688.3,209.6],[697.7,219.4],[706.9,229.3],[716.4,238.9],[728.9,244],[742.3,243.2],[755.3,239.4],[767.8,234.4],[779.6,227.9],[791.3,221],[804,216.5],[817.4,217.1],[829.4,223.3],[837.8,233.7],[842.1,246.5],[848.5,258.1],[859.4,265.9],[872.7,268.4],[886.1,270.6],[899.4,272.7],[912.8,274.8],[926.2,276.7],[939.6,278.6],[953,280.4],[966.5,280.4],[979.1,275.5],[990.9,269],[1002.7,262.4],[1014.5,255.7],[1026.3,249.1],[1038.1,242.4],[1049.9,235.8],[1061.7,229.2],[1073.5,222.6],[1085.4,216.1],[1097.2,209.5],[1109,203],[1120.8,196.3],[1129.1,185.8],[1132,172.8],[1128.3,160],[1119.1,150.2],[1106.5,146],[1093,145.2],[1079.5,144.4],[1066,143.6],[1052.5,142.7],[1039,141.6],[1025.5,140.5],[1012,139.3],[998.6,138],[985.1,136.6],[971.7,135.1],[958.2,133.5],[944.8,131.9],[931.4,130.2],[917.9,128.5],[904.5,126.6],[891.1,124.7],[877.8,122.7],[864.4,120.6],[851,118.4],[837.7,116.1],[824.4,113.8],[811.1,111.4],[797.7,108.9],[784.4,106.4],[771.2,103.9],[757.9,101.2],[744.6,98.5],[731.4,95.6],[718.2,92.7],[705,89.8],[691.8,86.8],[678.6,83.8],[665.4,80.7],[652.3,77.4],[639.2,74],[626.1,70.5],[613.1,67],[600,63.4],[587,59.8],[573.9,56.3],[560.9,52.7],[547.8,49.1],[534.8,45.5],[521.7,42],[508.6,38.6],[495.4,41],[484.4,48.5],[478,60.3],[477.3,73.6],[480.8,86.6],[484.2,99.7],[485.2,113],[480.1,124.9],[470.8,133],[459.4,135.8],[449.1,132.2],[441.2,124.6],[435.3,115.8],[428.7,108.2],[419.9,105.3],[409,105.9],[399.5,113.8],[395,126.3],[396,139.6],[398,153],[399.7,166.5],[399.4,179.9],[394.7,192.5],[387,203.7],[378.1,213.8],[368.1,222.9],[355.8,228.2],[342.3,229.7],[328.8,230.7],[315.3,231.3],[301.9,229.7],[289.4,224.6],[277.6,217.9],[267,209.6],[257.4,200.1],[249.3,189.2],[244.9,176.5],[242.1,163.3],[238.8,150.1],[235.5,137],[232.1,123.9],[228.5,110.9],[224.7,97.9],[220.8,84.9],[216.5,72.1],[208.6,61.3],[196.6,55.3],[183.1,54.2],[169.6,54.3],[156,54.7],[142.5,55],[129,55.5],[115.5,55.9],[101.9,56.4],[88.4,56.9],[74.9,57.5],[61.6,59.2],[50.4,66.5],[43.2,77.7],[42.1,91],[46.7,103.5],[53.4,115.3],[60.2,127],[67,138.7],[73.8,150.4],[80.6,162.1],[87.5,173.7],[94.4,185.4],[101.3,197],[108.2,208.7],[115.1,220.3],[122,231.9],[128.9,243.5],[135.9,255.2],[142.8,266.8],[149.7,278.4],[156.6,290.1],[163.5,301.7]]
+ },
+ miami:{
+  key:'miami',name:'Miami International Autodrome',country:'United States',
+  event:'MIAMI GRAND PRIX',km:5.412,length:5412,corners:19,laps:57,
+  record:'1:29.708',recordBy:'Verstappen, 2023',pole:'1:27.241',
+  view:[1200,540],label:[970,342],lights:[180,314],
+  pitSide:-1,minRadius:50,curvStencil:7,
+  pit:{in:.930,out:.020,taper:.020},
+  drs:[{det:0.334,from:0.376,to:0.539},{det:0.696,from:0.738,to:0.857},{det:0.944,from:0.986,to:0.021}],
+  sectors:[0,0.303,0.646],
+  pts:[[600.8,358.9],[586.2,348.7],[571.6,338.6],[556.9,328.6],[542.1,318.7],[527.4,308.7],[512.7,298.7],[498,288.5],[483.6,278.2],[471.1,265.9],[465,249.5],[468,232.3],[477.7,217.7],[492.5,207.9],[503.5,194.2],[507,176.9],[505.9,159.2],[507.9,141.5],[513.7,124.8],[524.7,110.9],[539,100.3],[554.8,92.2],[571.8,87.1],[589.2,83.4],[606.8,81],[624.6,80.8],[642.3,82.6],[659.6,86.7],[676,93.5],[691.5,102.2],[706.6,111.7],[721.4,121.6],[736.1,131.6],[750.7,141.7],[765.3,151.9],[779.9,162.1],[794.4,172.4],[809,182.6],[823.5,192.9],[838.1,203.1],[852.6,213.4],[868.9,220.2],[886.5,222.2],[904.1,219.9],[920.8,213.8],[935.9,204.5],[950.9,194.9],[968,190.2],[985.7,191.1],[1002.3,197.3],[1016.4,208],[1028.6,221],[1040.6,234.1],[1055.5,243.8],[1072.3,249.4],[1090,249.5],[1107.5,246.2],[1124.6,241.3],[1140.5,233.4],[1153.6,221.4],[1163.4,206.7],[1168.8,189.8],[1168.5,172.2],[1160.6,156.5],[1146.1,146.4],[1128.7,144.3],[1111,146],[1093.3,144.2],[1076.1,139.8],[1059.1,134.7],[1042,129.7],[1025,124.5],[1007.9,119.5],[990.6,115.1],[973.1,112],[955.4,110.4],[937.6,109.8],[919.8,109.8],[902,109.6],[884.2,109.4],[866.4,109.5],[848.7,109.7],[830.9,109.8],[813.1,109.7],[795.3,109.1],[777.6,107.3],[760.4,102.9],[744,95.9],[727.7,88.8],[711.4,81.7],[695.1,74.6],[678.7,67.6],[662.3,60.7],[645.9,53.9],[629.2,47.6],[612.3,42.2],[595,37.9],[577.6,34.4],[559.9,32],[542.2,30.6],[524.4,30.4],[506.6,31.3],[489,33.3],[471.5,36.5],[454.3,41],[437.2,46.2],[420.2,51.2],[403.1,56.2],[386,61.2],[368.9,66.2],[351.9,71.2],[334.8,76.3],[317.8,81.4],[300.7,86.6],[283.7,91.8],[266.8,97.2],[249.9,103],[233.3,109.4],[216.9,116.3],[200.6,123.4],[184.4,130.7],[168.3,138.3],[152.3,146.1],[136.6,154.4],[126.9,168.9],[123.2,185.9],[129.1,202.1],[140.6,215.1],[147.6,231.1],[146.8,248.5],[139.1,264],[124.4,273.6],[107,275.5],[89.3,273.1],[71.7,274.7],[56.6,283.9],[44.6,297],[37.9,313.1],[38.6,330.1],[44.9,345.9],[42.1,363.2],[39.4,380.5],[45.6,396.9],[58.4,408.9],[75.3,413.7],[93,415.8],[110.6,417.7],[128.3,419.6],[146,421.4],[163.7,423.2],[181.4,425],[199.2,426.7],[216.9,428.4],[234.6,430.2],[252.3,431.9],[270,433.6],[287.7,435.3],[305.4,437],[323.1,438.7],[340.9,440.4],[358.6,442.1],[376.3,443.8],[394,445.5],[411.7,447.2],[429.4,448.9],[447.1,450.6],[464.8,452.4],[482.6,454.1],[500.3,455.8],[518,457.6],[535.7,459.4],[553.4,461.2],[571.1,463],[588.8,464.8],[606.5,466.7],[624.2,468.6],[641.8,470.6],[659.5,472.7],[677.2,474.7],[694.9,476.8],[712.5,478.9],[730.2,481.1],[747.9,483.2],[765.5,485.3],[783.2,487.5],[800.9,489.6],[818.5,491.8],[836.2,493.9],[853.9,496],[871.5,498.1],[889.2,500.1],[906.9,502.1],[924.6,504],[942.3,505.4],[958.8,499.1],[969.9,485.6],[973.1,468.4],[967.4,451.8],[954.3,440],[937.5,434.4],[919.8,433.8],[902.5,438],[885.8,444.1],[869.3,450.9],[852.8,457.4],[835.7,462.4],[818.2,465.4],[800.4,466.6],[782.7,466],[765.1,463.2],[748,458.2],[731.8,450.8],[716.5,441.9],[701.6,432.1],[687,421.9],[672.6,411.5],[658.2,401],[643.9,390.4],[629.6,379.9],[615.2,369.4]]
+ },
+ vegas:{
+  key:'vegas',name:'Las Vegas Strip Circuit',country:'United States',
+  event:'LAS VEGAS GRAND PRIX',km:6.201,length:6201,corners:17,laps:50,
+  record:'1:34.876',recordBy:'Norris, 2024',pole:'1:32.312',
+  view:[1200,660],label:[490,244],lights:[320,146],
+  pitSide:-1,minRadius:35,curvStencil:7,
+  pit:{in:.930,out:.020,taper:.020},
+  drs:[{det:0.096,from:0.138,to:0.207},{det:0.536,from:0.578,to:0.788}],
+  sectors:[0,0.299,0.601],
+  pts:[[211.7,582.2],[222.5,591.6],[233.2,601.1],[244.2,610.3],[256.6,617.3],[270.5,616.3],[279.8,605.8],[283.1,591.9],[281.5,577.8],[276.2,564.5],[268.2,552.7],[258.8,541.8],[250,530.5],[244.6,517.4],[243.9,503.1],[247.7,489.3],[254.9,477],[264.8,466.7],[276.8,458.9],[290.1,453.9],[304.2,451.4],[318.5,450.1],[332.8,449.3],[347.1,448.6],[361.4,448],[375.7,447.5],[390,447],[404.4,446.6],[418.7,446.2],[433,445.9],[447.3,445.6],[461.6,445.3],[476,445.1],[490.3,444.9],[504.6,444.7],[518.9,444.5],[533.3,444.4],[547.6,444.3],[561.9,444.2],[576.2,444.1],[590.5,444.1],[604.9,444.1],[619.2,444.1],[633.5,444.1],[647.8,444.2],[662.2,444.4],[676.5,444.6],[690.8,444.9],[705.1,445.4],[719.4,446.4],[733,450.4],[741.5,461.5],[743.4,475.7],[743.3,490],[742.8,504.3],[742.2,518.6],[741.7,532.9],[741.3,547.3],[741.4,561.6],[743.1,575.8],[748.3,589.1],[757,600.4],[767.7,609.9],[779.6,617.8],[792.7,623.7],[806.5,627.4],[820.7,628.4],[833.2,622.3],[841.6,610.7],[853.8,603.8],[867.9,605.7],[880.9,611.7],[894,617.3],[907.9,616.9],[917.3,606.7],[920.3,592.7],[921.1,578.4],[921.4,564.1],[921.6,549.8],[921.7,535.5],[921.8,521.1],[921.9,506.8],[922.1,492.5],[922.4,478.2],[922.9,463.8],[923.7,449.5],[924.8,435.3],[926.3,421],[928.5,406.9],[932.1,393],[937.9,379.9],[946.3,368.4],[956.7,358.6],[968.6,350.6],[981.3,344],[994.3,338.1],[1007.6,332.6],[1020.9,327.3],[1034.1,321.8],[1046.9,315.3],[1058.6,307.2],[1068.7,297.1],[1077.2,285.5],[1083.8,272.8],[1088.9,259.5],[1093.3,245.8],[1097.2,232],[1100.1,218],[1098.9,203.9],[1089.4,193.6],[1076.6,187.2],[1063.7,181],[1050.9,174.5],[1038.1,168],[1025.4,161.5],[1012.7,154.9],[1000,148.2],[987.4,141.5],[974.8,134.7],[962.2,127.7],[949.8,120.6],[937.4,113.4],[925,106.3],[912.4,99.5],[899.5,93.3],[886.4,87.5],[873.1,82.2],[859.5,77.5],[845.8,73.3],[832.1,69.3],[818.3,65.3],[804.6,61.4],[790.8,57.5],[776.9,53.9],[763,50.7],[748.9,48],[734.8,45.5],[720.6,43.4],[706.4,41.5],[692.2,40],[677.9,38.7],[663.6,37.9],[649.3,37.3],[635,36.8],[620.7,36.7],[606.3,36.7],[592,36.9],[577.7,37.1],[563.4,37.3],[549.1,37.5],[534.7,37.7],[520.4,37.8],[506.1,38],[491.8,38.1],[477.5,38],[463.1,37.7],[448.8,37.3],[434.5,36.9],[420.2,36.4],[405.9,35.9],[391.6,35.3],[377.2,34.8],[362.9,34.3],[348.6,33.8],[334.3,33.4],[320,32.9],[305.7,32.6],[291.3,32.3],[277,32],[262.7,31.7],[248.4,31.5],[234.1,31.4],[219.7,31.3],[205.4,31.4],[191.1,31.3],[176.8,31],[162.5,30.3],[148.2,30.1],[134.8,34.5],[126.7,46.2],[119.5,58.6],[110.8,70],[103.8,82.4],[99.9,96.1],[98.2,110.4],[97.5,124.7],[97.2,139],[97.2,153.3],[97.2,167.6],[97.2,182],[97.3,196.3],[97.5,210.6],[97.8,224.9],[98.1,239.2],[98.4,253.6],[98.6,267.9],[98.8,282.2],[98.9,296.5],[98.9,310.8],[98.9,325.2],[98.8,339.5],[98.7,353.8],[98.7,368.1],[98.8,382.5],[99,396.8],[99.6,411.1],[101,425.3],[103,439.5],[105.4,453.7],[108,467.7],[111.6,481.6],[117.6,494.6],[126.1,506],[136.3,516.1],[146.9,525.7],[157.7,535.1],[168.5,544.5],[179.3,553.9],[190.1,563.3],[200.9,572.7]]
+ },
+ zandvoort:{
+  key:'zandvoort',name:'Circuit Zandvoort',country:'Netherlands',
+  event:'DUTCH GRAND PRIX',km:4.259,length:4259,corners:14,laps:72,
+  record:'1:11.097',recordBy:'Hamilton, 2021',pole:'1:09.673',
+  view:[1200,660],label:[950,34],lights:[900,76],
+  pitSide:1,minRadius:65,curvStencil:13,
+  pit:{in:.930,out:.020,taper:.020},
+  drs:[{det:0.24,from:0.282,to:0.352},{det:0.877,from:0.919,to:0.06}],
+  sectors:[0,0.323,0.63],
+  pts:[[346.8,291.1],[353,280.3],[359.2,269.5],[365.4,258.7],[371.6,247.9],[377.7,237],[383.9,226.2],[390.1,215.4],[396.2,204.5],[402.4,193.7],[408.6,182.9],[414.7,172.1],[420.9,161.2],[427.1,150.4],[433.3,139.6],[439.5,128.8],[445.7,118],[451.9,107.2],[459.4,97.3],[469.6,90.2],[481.5,87],[493.7,89.1],[503.4,96.7],[508.6,107.8],[509.4,120.2],[506.4,132.2],[500.6,143.3],[495.2,154.5],[490.3,166],[486.2,177.7],[482.9,189.7],[480.5,202],[478.7,214.3],[476.7,226.6],[472.2,238.2],[464.9,248.2],[456.1,256.9],[449.7,267.4],[447.6,279.6],[450.3,291.5],[457.7,301.3],[468,307.8],[480,310.6],[492.4,310],[504.9,309.1],[517.3,309],[529.8,309.6],[542.1,311],[554.4,313.1],[566.6,315.7],[578.6,319.1],[590.4,323],[602.1,327.5],[613.7,331.9],[625.5,336],[637.5,339.4],[649.7,341.7],[662.1,342.6],[674.6,342.1],[687,340.6],[699.1,338],[711.1,334.3],[722.7,329.8],[734.1,324.8],[745.4,319.6],[756.9,314.7],[768.7,310.7],[780.7,307.7],[793.1,305.9],[805.5,305.3],[818,305.8],[830.4,307.1],[842.7,309],[855,311],[867.3,313.2],[879.5,315.4],[891.8,317.8],[903.9,320.6],[915.9,324],[927.5,328.6],[938.3,334.8],[947.9,342.7],[956,352.1],[962.4,362.8],[966.9,374.4],[969.4,386.6],[969.8,399],[968.2,411.4],[964.6,423.3],[959.3,434.6],[952.4,444.9],[944.5,454.6],[936.1,463.8],[927.5,472.8],[919,481.9],[910.6,491.1],[902.5,500.6],[895,510.5],[888.1,520.9],[881.6,531.6],[875.4,542.4],[868.9,553],[861.2,562.7],[851.1,570],[839.6,574.5],[827.2,575.8],[814.8,574.7],[802.6,572.2],[790.7,568.7],[779.1,564.1],[767.9,558.5],[757.2,552.2],[747.8,544.1],[740.8,533.8],[736.9,522],[736.4,509.6],[739.1,497.5],[745.3,486.8],[753.9,477.8],[764.7,471.7],[776.7,468.7],[789.2,467.9],[801.6,466.7],[813.7,463.9],[824.6,458.1],[833.5,449.4],[839.5,438.6],[842.2,426.5],[841.3,414.1],[836.7,402.5],[829.2,392.7],[819.2,385.4],[807.6,381],[795.4,378.4],[783.1,376.2],[770.8,374.2],[758.5,372.6],[746.1,371.3],[733.7,370.4],[721.2,369.7],[708.8,369.3],[696.3,369.2],[683.8,369.4],[671.4,370],[659,370.9],[646.6,372.2],[634.2,373.8],[621.9,375.6],[609.6,377.6],[597.3,379.8],[585.1,382.2],[572.9,384.8],[560.7,387.6],[548.6,390.6],[536.6,393.7],[524.6,397.2],[512.8,401.2],[501.1,405.6],[489,408.3],[476.7,407.6],[464.9,404],[452.8,403.9],[440.9,405.4],[430.1,410.9],[421,418.8],[413.6,428.6],[409.8,440.4],[408.9,452.7],[409.5,465.2],[410.2,477.6],[410.8,490.1],[411.4,502.5],[412,515],[412.5,527.4],[413.1,539.9],[413.6,552.3],[414,564.8],[414.1,577.3],[413,589.7],[409.3,601.5],[402.7,612],[393.5,620.4],[382.4,626.1],[370.3,628.6],[357.8,628.6],[345.4,627.5],[333,625.9],[320.7,624],[308.5,621.5],[296.5,618],[285,613.4],[274,607.5],[263.8,600.3],[254.7,591.8],[247,582.1],[240.6,571.4],[235.5,560],[231.9,548.1],[230,535.8],[229.8,523.3],[231,510.9],[233.6,498.7],[237.5,486.9],[242.3,475.4],[247.8,464.2],[253.7,453.2],[259.7,442.3],[265.8,431.4],[271.9,420.6],[278.1,409.8],[284.3,399],[290.5,388.2],[296.7,377.4],[303,366.6],[309.2,355.8],[315.5,345],[321.7,334.2],[328,323.5],[334.3,312.7],[340.5,301.9]]
  },
  silverstone:{
   key:'silverstone',name:'Silverstone Circuit',country:'United Kingdom',
@@ -507,7 +572,7 @@ function smoothCirc(a,w){
 /* Everything below is rebuilt by buildCircuit() when the circuit changes. */
 let CIRCUIT,TRACK,LENGTH,VIEW,PITLAT,DRSZONES,SECTORS,PITIN,PITOUT,PITTAPER,PITSPAN,
     CENTRE,PXLEN,STEP,MPP,S0,cxs,cys,txs,tys,nxs,nys,kcen,RACE,KRACE,VPROF,REFLAP,REFTIME,
-    outwardSign,trackPath,racePath,pitPathD,pitBoxD,pitBBox;
+    outwardSign,trackPath,racePath,pitPathD,pitBoxD,pitBBox,CORNERS;
 
 const posOf=d=>((d%LENGTH)+LENGTH)%LENGTH/LENGTH*NS+S0;
 const idxOf=d=>Math.floor(posOf(d))%NS;
@@ -610,6 +675,18 @@ function buildCircuit(key){
   const s=new Int8Array(NS);
   for(let i=0;i<NS;i++)s[i]=((cxs[i]-mx)*nxs[i]+(cys[i]-my)*nys[i])>=0?1:-1;
   return s;})();
+ /* Corner numbers are read off the speed profile: every minimum deep enough
+    to be a corner, numbered from the start line the way a circuit map does.
+    That is what lets a message say which turn an incident was at. */
+ CORNERS=(()=>{
+  const out=[],lim=Math.max(...VPROF)*.93;
+  for(let i=0;i<NS;i++){
+   const p=(i-1+NS)%NS,n=(i+1)%NS;
+   if(VPROF[i]<=VPROF[p]&&VPROF[i]<VPROF[n]&&VPROF[i]<lim){
+    const frac=((i-S0)%NS+NS)%NS/NS;
+    if(!out.length||Math.abs(frac-out[out.length-1].frac)>.012)out.push({frac,v:VPROF[i]});}}
+  out.sort((a,b)=>a.frac-b.frac);
+  return out.map((c,i)=>({...c,n:i+1}));})();
  trackPath=pathFor(()=>0,4);
  racePath=pathFor(i=>RACE[i]*USABLE,4);
  pitPathD=(()=>{
@@ -661,9 +738,9 @@ const insideAhead=d=>{const k=lerpArr(kcen,d+70);return Math.abs(k)<1/260?0:(k>0
 
 function pointsFor(completed,totalLaps,greenLaps){if(greenLaps<2||completed<2)return {band:'No points',points:[]};const r=completed/totalLaps;return r<.25?{band:'Under 25%',points:[6,4,3,2,1]}:r<.5?{band:'25–50%',points:[13,10,8,6,5,4,3,2,1]}:r<.75?{band:'50–75%',points:[19,14,12,10,8,6,4,3,2,1]}:{band:'Full points',points:[25,18,15,12,10,8,6,4,2,1]};}
 class RaceEngine{
- constructor(seed=2026){this.seed=seed>>>0;this.time=0;this.nextSample=0;this.phaseAt=0;this.startAt=0;this.scEndAt=0;this.resumeType=null;this.phase='FORMATION_READY';this.flag='GREEN';this.paused=true;this.rate=4;this.totalLaps=CIRCUIT.laps;this.weather=0;this.events=[];this.documents=[];this.incidents=[];this.decisions=[];this.teamRadio=[];this.fiaRadio=[];this.filed=false;this.samples=[];this.replay=[];this.snapshots={};this.triggers=new Set();this.gridClear=false;this.pitExit=false;this.lights=0;this.greenLaps=0;this.greenStreak=0;this.lastLeaderLap=0;this.scTime=0;this.scLap=null;this.unlapLap=null;this.returnOrders=[];this.result=null;this.suspension=null;this.recovery=null;this.scenario=1;this.campaign=true;this.cars=GRID2026.map(([id,name,teamId],i)=>{
+ constructor(seed=2026){this.seed=seed>>>0;this.time=0;this.nextSample=0;this.phaseAt=0;this.startAt=0;this.scEndAt=0;this.resumeType=null;this.phase='FORMATION_READY';this.flag='GREEN';this.paused=true;this.rate=4;this.totalLaps=CIRCUIT.laps;this.weather=0;this.events=[];this.documents=[];this.incidents=[];this.decisions=[];this.teamRadio=[];this.fiaRadio=[];this.messages=[];this.stewardsQueue=[];this.filed=false;this.samples=[];this.replay=[];this.snapshots={};this.triggers=new Set();this.gridClear=false;this.pitExit=false;this.lights=0;this.greenLaps=0;this.greenStreak=0;this.lastLeaderLap=0;this.scTime=0;this.scLap=null;this.unlapLap=null;this.returnOrders=[];this.result=null;this.suspension=null;this.recovery=null;this.scenario=1;this.campaign=true;this.cars=GRID2026.map(([id,name,code,teamId],i)=>{
   const team=TEAMS.find(t=>t.id===teamId),second=GRID2026.findIndex(g=>g[2]===teamId)!==i;
-  return{id,name,team:teamId,teamName:team.name,boxSlot:TEAMS.indexOf(team),boxU:.34+TEAMS.indexOf(team)*.030+(second?.012:0),
+  return{id,name,code,team:teamId,teamName:team.name,boxSlot:TEAMS.indexOf(team),boxU:.34+TEAMS.indexOf(team)*.030+(second?.012:0),
    colour:second?lighten(team.colour,.42):team.colour,
    get color(){return this.colour;},
    dist:-i*9,speed:0,lane:(i%2?1:-1)*2.6,lat:(i%2?1:-1)*2.6,latV:0,line:null,lineLap:null,heading:null,aside:0,
@@ -672,7 +749,7 @@ class RaceEngine{
    plan:null,stintFrom:1,stopAt:0,pitRequested:false,
    ers:.8,fuel:100,brake:0,throttle:0,steer:0,heart:108,impact:0,intrusion:false,wing:2.3,plank:9.6,flow:0,
    pitState:id===41?'HOLD':null,pitTimer:0,stops:0,penalties:[],
-   decision:'Hold formation',reason:'Awaiting Race Control',candidates:[],nextDecision:0,warnings:0,bwFlag:false,cautionUntil:0,underInvestigation:false,
+   decision:'Hold formation',reason:'Awaiting Race Control',candidates:[],nextDecision:0,warnings:0,bwFlag:false,cautionUntil:0,underInvestigation:false,trackLimits:0,limitAt:0,wideUntil:0,licencePoints:0,reprimands:0,mustPitBy:null,servingPenalty:null,blueAt:0,orangeFlag:false,
    status:'RUNNING',history:[],sectorDeltas:[0,0,0],gear:0,rpm:0,
    drs:false,drsArmed:false,mistakeUntil:0,lapAt:null,lapFrom:null,lapValid:false,lastDist:null,
    lastLap:null,bestLap:null,sectorAt:null,sectorIdx:null,radioAt:0,
@@ -695,6 +772,82 @@ class RaceEngine{
   if(this.teamRadio.length>200)this.teamRadio.length=200;
  }
  pitWall(c,text,urgent){this.teamSay(c,'PIT',text,urgent);}
+/* --------------------- OFFICIAL RACE CONTROL MESSAGES -------------------
+    The message feed Race Control actually publishes: capitalised, timestamped
+    against the session clock and the lap, naming cars by number and code. It
+    is the record of the event, separate from anything said on the radio. */
+ rcm(category,text,cars){
+  this.messages.unshift({time:this.time,lap:this.lap,category,text:text.toUpperCase(),cars:cars||[]});
+  if(this.messages.length>220)this.messages.length=220;
+ }
+ tag(c){return `CAR ${c.id} (${c.code})`;}
+ cornerAt(dist){
+  if(!CORNERS.length)return null;
+  const f=((dist%LENGTH)+LENGTH)%LENGTH/LENGTH;
+  let best=CORNERS[0],bd=9;
+  for(const c of CORNERS){const d=Math.min(Math.abs(c.frac-f),1-Math.abs(c.frac-f));if(d<bd){bd=d;best=c;}}
+  return best.n;
+ }
+ /* ---------------------------- THE STEWARDS ------------------------------
+    Race Control notes an incident and refers it; the stewards investigate and
+    return a decision in their own time. The director does not award penalties
+    - that separation is the whole point of the two roles. */
+ refer(cars,offence,opts){
+  const list=[].concat(cars);
+  const names=list.map(c=>this.tag(c)).join(' AND ');
+  this.rcm('INCIDENT',`INCIDENT INVOLVING ${names} NOTED - ${offence}`,list.map(c=>c.id));
+  this.stewardsQueue.push({cars:list,offence,at:this.time,
+   dueAt:this.time+14+this.random()*26,stage:'NOTED',...(opts||{})});
+  for(const c of list)c.underInvestigation=true;
+ }
+ stewardsTick(){
+  for(const item of this.stewardsQueue){
+   if(item.stage==='NOTED'&&this.time>item.at+6){
+    item.stage='INVESTIGATING';
+    this.rcm('STEWARDS',`FIA STEWARDS: ${item.cars.map(c=>this.tag(c)).join(' AND ')} - ${item.offence} - UNDER INVESTIGATION`,item.cars.map(c=>c.id));
+   }
+   if(item.stage==='INVESTIGATING'&&this.time>item.dueAt){
+    item.stage='DONE';
+    const c=item.cars[0];
+    const guilty=item.force||this.random()<(item.likely??.62);
+    c.underInvestigation=false;
+    for(const x of item.cars)x.underInvestigation=false;
+    if(!guilty){
+     this.rcm('STEWARDS',`FIA STEWARDS: ${this.tag(c)} - ${item.offence} - NO FURTHER ACTION`,[c.id]);
+     this.doc('Decision · No further action',`${this.tag(c)}: ${item.offence}. The stewards reviewed the incident and took no further action.`,'DECISION');
+    }else{
+     this.applyPenalty(c,item.penalty||'time5',item.offence,item.points??2);
+    }
+   }
+  }
+  this.stewardsQueue=this.stewardsQueue.filter(i=>i.stage!=='DONE');
+ }
+ /* Article 54 in practice: a time penalty is served at the car's next stop
+    before any work, or added to its race time if it never stops again; a
+    drive-through and a stop-and-go have to be taken in the pit lane. */
+ applyPenalty(c,kind,offence,points){
+  const label={time5:'5 SECOND TIME PENALTY',time10:'10 SECOND TIME PENALTY',
+   drivethrough:'DRIVE-THROUGH PENALTY',stopgo:'10 SECOND STOP-AND-GO PENALTY',
+   reprimand:'REPRIMAND'}[kind]||kind.toUpperCase();
+  if(kind==='reprimand'){
+   c.reprimands=(c.reprimands||0)+1;
+  }else{
+   c.penalties.push({kind,seconds:kind==='time10'?10:kind==='time5'?5:0,served:false,time:this.time});
+   if(kind==='drivethrough'||kind==='stopgo'){c.mustPitBy=this.lap+3;c.pitRequested=true;c.servingPenalty=kind;}
+  }
+  if(points){c.licencePoints=(c.licencePoints||0)+points;}
+  c.cautionUntil=this.time+90;
+  this.rcm('STEWARDS',`FIA STEWARDS: ${this.tag(c)} - ${label}${offence?' - '+offence:''}`,[c.id]);
+  this.doc('Decision · '+this.tag(c),
+   `${label}${offence?' for '+offence.toLowerCase():''}.`
+   +(points?` ${points} penalty point${points===1?'':'s'} added to the driver's Super Licence (${c.licencePoints} in total).`:'')
+   +(kind==='time5'||kind==='time10'?' To be served at the car\u2019s next pit stop before any work, or added to its race time.':'')
+   +(kind==='drivethrough'?' The car must enter the pit lane and pass through without stopping within three laps.':'')
+   +(kind==='stopgo'?' The car must stop in its box for ten seconds with no work carried out.':''),'DECISION');
+  this.pitWall(c,`${label.toLowerCase()}. We will deal with it.`,true);
+  if(c.licencePoints>=12)this.doc('Notice · '+this.tag(c),
+   'Twelve penalty points reached within twelve months; the driver is suspended for the next event.','NOTICE');
+ }
 /* ------------------------------- FIA RADIO ------------------------------
     The director's own channel. Everything sent on it is on the record, and
     what the recipient hears changes how they drive: a warned driver backs
@@ -720,28 +873,37 @@ class RaceEngine{
    note:text||'Message noted for all competitors.',
    warning:`Driving standards warning${target.kind==='driver'?'':' to all cars'}. ${text||'Leave a car width and stay inside the white line.'}`,
    bw:'Black-and-white flag shown. This is a final warning on driving standards.',
-   investigate:`Incident noted and under investigation${text?': '+text:'.'}`,
-   penalty5:`Stewards decision: five second time penalty${text?' — '+text:'.'}`,
-   penalty10:`Stewards decision: ten second time penalty${text?' — '+text:'.'}`,
+   bo:'Black-and-orange flag. The car has loose bodywork and must come to the pit lane.',
+   investigate:`Incident noted and referred to the stewards${text?': '+text:'.'}`,
+   penalty5:`Stewards decision: five second time penalty${text?' \u2014 '+text:'.'}`,
+   penalty10:`Stewards decision: ten second time penalty${text?' \u2014 '+text:'.'}`,
+   drivethrough:`Stewards decision: drive-through penalty${text?' \u2014 '+text:'.'}`,
+   stopgo:`Stewards decision: ten second stop-and-go penalty${text?' \u2014 '+text:'.'}`,
+   reprimand:`Stewards decision: reprimand${text?' \u2014 '+text:'.'}`,
    summon:`Team principal summoned to Race Control after the session${text?': '+text:'.'}`
   }[action]||text||'';
   this.fiaSay('FIA',label,colour,said,action);
+  const offence=(text||'').toUpperCase()||'DRIVING STANDARDS';
   let escalated=null;
+  const PEN={penalty5:'time5',penalty10:'time10',drivethrough:'drivethrough',stopgo:'stopgo',reprimand:'reprimand'};
   for(const c of cars){
    if(action==='warning'){
     c.warnings=(c.warnings||0)+1;c.cautionUntil=this.time+120;
-    if(c.bwFlag&&!escalated){escalated=c;c.penalties.push({seconds:5,served:false,time:this.time});
-     this.doc('Penalty · '+c.id,'Further driving standards offence after a black-and-white flag; five second time penalty.');}
+    this.rcm('WARNING',`${this.tag(c)} - DRIVING STANDARDS WARNING${text?' - '+text.toUpperCase():''}`,[c.id]);
+    /* A car already carrying the black-and-white flag has no warnings left:
+       the next offence is reported to the stewards, as the flag says. */
+    if(c.bwFlag&&!escalated){escalated=c;this.refer(c,offence,{force:true,penalty:'time5',points:1});}
    }
-   if(action==='bw'){c.bwFlag=true;c.cautionUntil=this.time+150;}
-   if(action==='penalty5'||action==='penalty10'){
-    const secs=action==='penalty5'?5:10;
-    c.penalties.push({seconds:secs,served:false,time:this.time});
-    c.cautionUntil=this.time+90;
-    this.doc('Penalty · '+c.id,`${secs} second time penalty, served at the car's next pit stop.`);
-   }
-   if(action==='investigate')c.underInvestigation=true;
-   if(action==='summon')this.doc('Summons · '+c.teamName,'Team principal summoned to Race Control after the session.');
+   if(action==='bw'){c.bwFlag=true;c.cautionUntil=this.time+150;
+    this.rcm('FLAG',`${this.tag(c)} - BLACK AND WHITE FLAG - UNSPORTSMANLIKE BEHAVIOUR`,[c.id]);
+    this.doc('Black and white flag · '+this.tag(c),'Shown for unsportsmanlike behaviour. Any further infringement will be reported to the stewards.','NOTICE');}
+   if(action==='bo'){c.orangeFlag=true;c.mustPitBy=this.lap+3;c.pitRequested=true;
+    this.rcm('FLAG',`${this.tag(c)} - BLACK AND ORANGE FLAG - BODYWORK`,[c.id]);}
+   if(PEN[action])this.applyPenalty(c,PEN[action],offence,action==='reprimand'?0:action==='penalty10'?3:2);
+   if(action==='investigate')this.refer(c,offence,{likely:.6,penalty:'time5',points:2});
+   if(action==='summon'){c.underInvestigation=true;
+    this.rcm('STEWARDS',`FIA STEWARDS: ${c.teamName.toUpperCase()} TEAM REPRESENTATIVE SUMMONED`,[c.id]);
+    this.doc('Summons · '+c.teamName,`The team representative is required to report to the stewards${text?' regarding '+text:''}.`,'SUMMONS');}
   }
   /* The reply. Principals do not always take a penalty quietly. */
   const c=cars[0],rnd=this.random();
@@ -752,7 +914,7 @@ class RaceEngine{
     :rnd<.45?'Copy, understood. I will leave the space.'
     :rnd<.8?'Copy. I felt I was alongside but I will back out of it.'
     :'Understood, but you need to look at what he did to me two laps ago.';
-  }else if(action==='penalty5'||action==='penalty10'){
+  }else if(PEN[action]){
    reply=rnd<.4?'Acknowledged. We will serve it at the stop.'
     :rnd<.75?'We do not agree with that. We will send you the onboard and the GPS.'
     :'That is very harsh. We will take it, but we want the reasoning in writing.';
@@ -766,7 +928,7 @@ class RaceEngine{
   }
   if(reply)this.fiaSay(rFrom,rWho,rCol,reply,action);
   if(escalated)this.fiaSay('FIA',`CAR ${escalated.id} ${escalated.name.toUpperCase()}`,escalated.colour,
-   'Further offence after a black-and-white flag: five second time penalty applied.','penalty5');
+   'Already on a black-and-white flag: this one goes to the stewards.','investigate');
   return{ok:true,message:`${label} · ${action.replace(/^penalty/,'penalty ')}`};
  }
  /* A finished race is filed to the season standings once, and only once. */
@@ -776,8 +938,9 @@ class RaceEngine{
   recordRace({circuit:CIRCUIT.key,name:CIRCUIT.name,event:CIRCUIT.event,
    laps:this.result.completed,scheduled:this.totalLaps,band:this.result.band,
    at:Date.now(),
-   rows:this.result.rows.map(r=>({id:r.id,name:r.name,team:this.car(r.id).team,
-    position:r.position,points:r.points,laps:r.laps}))});
+   rows:this.result.rows.map(r=>{const c=this.car(r.id);
+    return{id:r.id,name:r.name,code:c.code,team:c.team,position:r.position,
+     points:r.points,laps:r.laps,lp:c.licencePoints||0,rep:c.reprimands||0};})});
  }
  driver(c,text,urgent){this.teamSay(c,'DRIVER',text,urgent);}
  /* ------------------------------ STRATEGY -------------------------------
@@ -825,7 +988,7 @@ class RaceEngine{
   else this.pitWall(c,`Box, box. ${next.compound.toLowerCase()} tyres, target lap ${next.lap}.`,true);
   this.driver(c,'Copy, box.',true);
  }
- doc(title,body,type='NOTICE'){let d={id:'SIM-'+String(this.documents.length+1).padStart(3,'0'),time:this.time,title,body,type};this.documents.unshift(d);return d;}
+ doc(title,body,type='NOTICE'){let d={id:'DOC '+(this.documents.length+1),time:this.time,title,body,type};this.documents.unshift(d);return d;}
  addIncident(type,title,evidence,cars){const i={id:this.incidents.length+1,type,title,evidence,cars,status:'REVIEW',time:this.time,lap:this.lap};this.incidents.unshift(i);return i;}
  choose(c){if(c.status==='RETIRED')return;if(c.pitState){c.decision=c.pitState==='HOLD'?'Await pit release':'Pit stop';c.reason='Pit speed and box clearance policy';return;}if(c.returnTo){c.decision='Return position';c.reason='Race Control order overrides racing utility';return;}if(c.unlapTarget){c.decision='Unlap';c.reason='Authorised to pass the Safety Car';return;}if(this.flag==='RED'){c.decision='Return to pits';c.reason='Session suspended; no overtaking';return;}if(this.flag==='SC'||this.flag==='VSC'||c.restartAt){c.decision='Hold delta';c.reason='Neutralisation or own restart line not yet crossed';return;}
  const ahead=this.order().filter(x=>x.id!==c.id&&x.status==='RUNNING'&&!x.pitState&&x.dist>c.dist).sort((a,b)=>a.dist-b.dist)[0];const gap=ahead?ahead.dist-c.dist:999;const behind=this.cars.some(x=>x.dist<c.dist&&c.dist-x.dist<45&&x.status==='RUNNING');const wetMismatch=this.weather>.52&&c.compound!=='WET';const scores=[['Race',.48+c.skill*.2,'Clear track: maximise sustainable pace'],['Attack',gap<95?((.42+c.aggression*.38)*(.55+.45*c.ers)+(c.drsArmed?.22:0))*(c.cautionUntil>this.time?.55:1):.1,'Car ahead is in range; spend energy and take the DRS'],['Defend',behind?.62+c.aggression*.22:.08,'Close following car: protect the approach and cover the inside'],['Conserve',(.38-c.ers)*1.5+(.45-c.tyre)*.7+.18,'Recover energy and protect tyre life'],['Pit',(c.tyre<.28?1.1:.08)+(wetMismatch?1.45:0),'Tyre condition or water requires a compound change'],['Wet caution',this.weather>.35&&!wetMismatch?.6+this.weather*.5:.04,'Standing water increases slip risk']];c.candidates=scores.map(([action,score,reason])=>({action,score:Math.max(0,score),reason})).sort((a,b)=>b.score-a.score);const win=c.candidates[0];if(c.decision!==win.action){this.decisions.unshift({time:this.time,id:c.id,action:win.action,reason:win.reason});this.decisions.length=Math.min(45,this.decisions.length);}c.decision=win.action;c.reason=win.reason;this.pitCall(c);}
@@ -858,6 +1021,7 @@ class RaceEngine{
  if(this.phase==='LIGHTS'){this.lights=Math.min(5,1+Math.floor(this.time-this.phaseAt));if(this.time-this.phaseAt>6.4){this.phase='RACING';this.startAt=this.time;this.lights=0;this.strategise();this.doc('Race start','Five lights extinguished. Start transponder data retained.');this.radio('RACE DIRECTOR','Lights out. Race underway. Pit exit remains held until the field clears.');}return;}
  if(['FORMATION_READY','GRID','SUSPENDED'].includes(this.phase))return;
  if(this.phase==='RESUME_NOTICE'){if(this.time-this.phaseAt>=20){this.flag=this.resumeType==='rolling'?'SC':'GREEN';this.phase=this.resumeType==='rolling'?'SC_RESTART':'LIGHTS';this.phaseAt=this.time;this.cars.filter(c=>c.status==='RUNNING').forEach((c,i)=>{c.pitState=null;c.speed=0;c.dist=Math.floor(c.dist/LENGTH)*LENGTH-i*9;c.lat=c.lane=(i%2?1:-1)*2.6;c.latV=0;});if(this.resumeType==='rolling'){this.scEndAt=(Math.floor(this.leader.dist/LENGTH)+1)*LENGTH;this.cars.forEach(c=>c.restartAt=(Math.floor(c.dist/LENGTH)+1)*LENGTH);}this.radio('RACE DIRECTOR','Preparation complete. Execute the selected resumption procedure.');}return;}
+ this.stewardsTick();
  let ordered=this.order();const leader=ordered[0];const neutral=['SC','VSC','RED'].includes(this.flag);for(let i=0;i<ordered.length;i++){const c=ordered[i];if(c.status==='RETIRED')continue;if(c.nextDecision<=this.time){this.choose(c);c.nextDecision=this.time+.7+this.random()*.5;}const old=c.dist,frac=((c.dist%LENGTH)+LENGTH)%LENGTH/LENGTH;c.aside=0;
  const lapNo=Math.floor(c.dist/LENGTH);if(c.lineLap!==lapNo||!c.line){c.lineLap=lapNo;c.line=newLineStyle(()=>this.random());}
  const oldFrac=((old%LENGTH)+LENGTH)%LENGTH/LENGTH;
@@ -934,15 +1098,32 @@ class RaceEngine{
  if(c.pitState){
   target=PITLIMIT;
   if(c.pitState==='IN'&&pu>=c.boxU)c.pitState='STOP';
+  /* A drive-through is exactly that: through the lane at the limiter with
+     no stop at all, so the box is skipped entirely. */
+  if(c.pitState==='IN'&&c.servingPenalty==='drivethrough'&&pu>=c.boxU){
+   c.pitState='OUT';
+   const p=c.penalties.find(x=>x.kind==='drivethrough'&&!x.served);
+   if(p)p.served=true;
+   c.servingPenalty=null;c.mustPitBy=null;
+   this.rcm('PENALTY',`${this.tag(c)} - DRIVE-THROUGH PENALTY SERVED`,[c.id]);
+  }
   if(c.pitState==='STOP'){
    target=0;
    if(c.speed<.4)c.stationaryTime=(c.stationaryTime||0)+dt;
-   const owed=c.penalties.filter(p=>!p.served).reduce((a,p)=>a+p.seconds,0);
+   const owed=c.penalties.filter(p=>!p.served&&p.seconds).reduce((a,p)=>a+p.seconds,0)
+    +(c.servingPenalty==='stopgo'?10:0);
    if(c.stationaryTime>2.4+owed){
     c.tyre=1;c.tyreAge=0;c.stintFrom=this.lap;
     c.compound=this.weather>.5?'WET':this.weather>.25?'INTER':c.nextCompound;
     c.usedCompounds.add(c.compound);
-    for(const p of c.penalties)if(!p.served){p.served=true;this.doc('Penalty served · '+c.id,p.seconds+' seconds stationary before service; reconciled once.');}
+    for(const p of c.penalties)if(!p.served&&p.seconds){p.served=true;
+     this.doc('Penalty served · '+this.tag(c),`${p.seconds} seconds stationary before any work was carried out.`,'NOTICE');
+     this.rcm('PENALTY',`${this.tag(c)} - ${p.seconds} SECOND TIME PENALTY SERVED`,[c.id]);}
+    if(c.servingPenalty==='stopgo'){
+     const p=c.penalties.find(x=>x.kind==='stopgo'&&!x.served);if(p)p.served=true;
+     c.servingPenalty=null;c.mustPitBy=null;
+     this.rcm('PENALTY',`${this.tag(c)} - 10 SECOND STOP-AND-GO PENALTY SERVED`,[c.id]);}
+    if(c.orangeFlag){c.orangeFlag=false;c.wing=2.3;c.mustPitBy=null;}
     c.pitState='OUT';c.stops++;c.stopAt=this.time;
     this.pitWall(c,`Good stop, ${c.compound.toLowerCase()}s on. Push on the out lap.`);
    }
@@ -966,7 +1147,13 @@ class RaceEngine{
  let want=0;
  if(!c.pitState){
   want=lerpArr(RACE,c.dist+c.line.apex)*c.line.commit*c.line.width+wanderAt(c.line,frac);
-  if(c.mistakeUntil>this.time)want=clamp(want+(Math.sign(ideal)||1)*.55,-1,1);
+  /* How far outside the racing line the driver is willing to be. Normally the
+    white line is the limit; a driver running wide or recovering from a
+    lock-up puts a wheel or more beyond it, which is what Race Control sees. */
+ const edge=(c.mistakeUntil>this.time||c.wideUntil>this.time)?1.5:1;
+ if(c.mistakeUntil>this.time)want+=(Math.sign(ideal)||1)*.55;
+ if(c.wideUntil>this.time)want+=(Math.sign(lerpArr(kcen,c.dist))||1)*.62;
+ want=clamp(want,-edge,edge);
  if(c.aside)want=want*.35+c.aside*.85;
   else if(c.unlapTarget)want=want*.4-insideAhead(c.dist)*.75;
   else if(neutral||c.restartAt)want=want*.82+.26*Math.sin(this.time*.55+c.id);
@@ -984,13 +1171,13 @@ class RaceEngine{
    const dl=(c.lat-o.lat)/USABLE;
    if(Math.abs(dl)<.62)want+=(dl>=0?1:-1)*((.62-Math.abs(dl))/.62)*(1-gapM/26)*1.15;
   }
-  want=clamp(want,-1,1);
- }
+  }
  const latTarget=c.pitState?pitLat(frac):want*USABLE;
  const wn=c.pitState?4.2:2.6+Math.min(c.speed,90)*.045;
  const latCap=c.pitState?6:1+c.speed*.045;
  c.latV=clamp(c.latV+((latTarget-c.lat)*wn*wn-2*wn*c.latV)*dt,-latCap,latCap);
- const latLo=c.pitState?PITLAT-3:Math.min(-USABLE,c.lat),latHi=Math.max(USABLE,c.lat);
+ const wide=(c.mistakeUntil>this.time||c.wideUntil>this.time)?USABLE*1.5:USABLE;
+ const latLo=c.pitState?PITLAT-3:Math.min(-wide,c.lat),latHi=Math.max(wide,c.lat);
  c.lat=clamp(c.lat+c.latV*dt,latLo,latHi);
  c.lane=c.lat;
  const spx=Math.max(c.speed,1)/MPP,tX=lerpArr(txs,c.dist),tY=lerpArr(tys,c.dist);
@@ -1005,6 +1192,9 @@ class RaceEngine{
   this.decisions.unshift({time:this.time,id:c.id,action:'Lock-up',reason:pressured?'Locked the inside front defending into the braking zone':'Missed the braking point and ran wide'});
   this.decisions.length=Math.min(45,this.decisions.length);
  }
+ if(!c.pitState&&!neutral&&c.status==='RUNNING'&&c.wideUntil<this.time-2&&pace<80&&
+    this.random()<dt*(.0016+(c.decision==='Attack'?.0022:0)+(1-c.tyre)*.0026+(pressured?.0012:0)+this.weather*.004))
+  c.wideUntil=this.time+.55+this.random()*.5;
  c.ers=clamp(c.ers+((c.decision==='Attack'?-.010:c.decision==='Conserve'?.012:.004)+(c.brake>25?.006:0))*dt,0,1);c.tyre=clamp(c.tyre-dt*tyre.wear*(c.decision==='Attack'?1.3:c.decision==='Conserve'?.78:1)*(this.weather>.6&&c.compound!=='WET'?2.2:1),.02,1);c.fuel=Math.max(0,c.fuel-dt*.018);c.flow=c.throttle*.96;c.heart=105+c.speed*.75+c.aggression*8;c.plank=Math.max(8.5,c.plank-dt*.000025);c.dist+=c.speed*dt;
  if(ahead&&!c.unlapTarget&&!c.returnTo&&!ahead.returnTo&&(neutral||c.restartAt))c.dist=Math.min(c.dist,ahead.dist-9);if(c.restartAt&&c.dist>=c.restartAt)c.restartAt=null;if(c.unlapTarget&&c.dist>=c.unlapTarget&&this.leader.dist-c.dist<85){c.unlapTarget=null;this.radio('DEPUTY DIRECTOR / MARSHAL LEAD',`Car ${c.id} has completed its authorised unlapping pass.`);}/* Sector and lap timing measured against the reference lap, so every delta
     on the map is what the car actually did rather than an estimate. */
@@ -1012,6 +1202,34 @@ class RaceEngine{
     the rules that hold a car behind another can pull it back over one, and
     that is not a lap. */
  c.lastDist=c.dist;
+ /* Track limits. All four wheels beyond the white line at racing speed is
+    an excursion; the ladder Race Control runs is a warning, a warning, the
+    black-and-white flag, and then it goes to the stewards. */
+ if(!c.pitState&&!neutral&&c.speed>25&&Math.abs(c.lat)>USABLE+1.4&&this.time-c.limitAt>4){
+  c.limitAt=this.time;c.trackLimits++;
+  const t=this.cornerAt(c.dist),n=c.trackLimits;
+  if(n<3)this.rcm('TRACK LIMITS',`TRACK LIMITS - TURN ${t} - ${this.tag(c)} - LAP ${this.lap} - ${n===1?'1ST':'2ND'} WARNING`,[c.id]);
+  else if(n===3){c.bwFlag=true;
+   this.rcm('FLAG',`${this.tag(c)} - BLACK AND WHITE FLAG - TRACK LIMITS - TURN ${t} - LAP ${this.lap}`,[c.id]);
+   this.doc('Black and white flag · '+this.tag(c),`Third track limits infringement at turn ${t}. Any further infringement will be reported to the stewards.`,'NOTICE');}
+  else if(n===4)this.refer(c,`TRACK LIMITS - TURN ${t}`,{force:true,penalty:'time5',points:1});
+  else if(n%3===1)this.refer(c,`TRACK LIMITS - TURN ${t}`,{force:true,penalty:'time5',points:1});
+ }
+ /* A car about to be lapped is shown blue flags and has to let the leader by. */
+ if(!c.pitState&&!neutral&&this.leader&&this.leader!==c&&this.time-c.blueAt>25){
+  const behind=this.leader.dist-c.dist;
+  if(behind>LENGTH*.995&&behind<LENGTH*1.02){
+   c.blueAt=this.time;
+   this.rcm('FLAG',`BLUE FLAG - ${this.tag(c)}`,[c.id]);
+   this.driver(c,'Blue flags, I know, I am letting him past.');
+  }
+ }
+ /* Loose bodywork is a black-and-orange flag: the car must come in. */
+ if(!c.orangeFlag&&c.wing>4.4&&c.status==='RUNNING'){
+  c.orangeFlag=true;c.mustPitBy=this.lap+3;c.pitRequested=true;
+  this.rcm('FLAG',`${this.tag(c)} - BLACK AND ORANGE FLAG - BODYWORK`,[c.id]);
+  this.pitWall(c,'Black and orange, we have to come in and fix the endplate. Box now.',true);
+ }
  const newFrac=((c.dist%LENGTH)+LENGTH)%LENGTH/LENGTH;
  if(c.dist>old)for(const z of DRSZONES)
   if(crossed(oldFrac,newFrac,z.det))c.drsArmed=gapAhead>0&&gapAhead<Math.max(c.speed,45);
@@ -1182,7 +1400,7 @@ const SCRIPT={
  ],[[TE,'Timing reconciled. Car 16 served the five-second release penalty on lap 14; it is not added again. The returned position is reflected in the retained race order.'],[RD,'Publish the provisional classification at lap 45. Car 55 first, Car 16 second, Car 4 third.'],[TB,'Confirm the points.'],[RD,'Full-points band confirmed. Twenty-five for first, eighteen for second, fifteen for third. The required racing laps are established.'],[TA,'And the wing investigation?'],[RD,'Still open. Preserve Car 16 for the technical delegate. Any resulting stewards decision must be incorporated before the result is made final.'],[CM,'Car 27’s examination remains with the medical service. No further medical detail for the race broadcast.'],[RD,'Race Control: session concluded. Timing archive secure. All stations, retain your logs.']],['Publish the provisional classification and points worksheet together. Mark the served five seconds as reconciled and retain the open technical case as a possible classification amendment.','Generate SIM-RESULT-09, SIM-POINTS-10, the red-flag chronology, marshal/recovery record and evidence manifest. Route the wing assembly to the technical delegate under recorded post-race control. Fade the deck to the steady red pit-exit lamp, then black.'],"RESULTS.PUBLISH_PROVISIONAL(); POINTS.PUBLISH([25,18,15,12,10,8,6,4,2,1]); TECH.INSPECTION_HOLD(16); SESSION.ARCHIVE();")
  ]}
  ],
- references:[{title:'[A] Jeddah Corniche Circuit centreline — f1-circuits dataset (sa-2021)',url:'https://github.com/bacinger/f1-circuits',note:'The surveyed track trace this simulator draws and drives. Projected to metres about the circuit centroid, rotated so the long axis lies across the panel, smoothed at roughly a 45 m scale and floored at a 55 m corner radius. Lap distance is set to the official 6.174 km.'},{title:'[B] Brembo braking data, Saudi Arabian Grand Prix',url:'https://www.brembo.com/en/company/news/2023-formula-1-saudi-arabia-gp-brembo-brakes',note:'Turn 1 from 325 to 116 km/h over 115 m in 2.26 s at a 4.5 g peak, Turn 27 from 319 to 113 km/h at 4.9 g, eight braking zones and roughly 15 per cent of the lap on the brakes. These measured numbers are what the braking and grip model is fitted to; the reference lap that results is 1:28.4 at 251 km/h, against a real pole of about 1:28.3 and a race record of 1:30.734.'},{title:'[C] Silverstone Circuit centreline — f1-circuits dataset (gb-1948)',url:'https://github.com/bacinger/f1-circuits',note:'The second circuit, prepared the same way as Jeddah: 5.891 km, corner radii floored at 65 m. The lap that results is 1:27.4 at 242.6 km/h, against Verstappen 1:27.097 in 2020 at 243.5 km/h, with the slowest corner at 96 km/h where Luffield is measured in the high nineties.'},{title:'[D] 2026 Formula 1 entry list and driver numbers',url:'https://www.formula1.com/en/latest/article/all-the-2026-f1-driver-numbers-confirmed-in-full.5rh7o9mPntG7NerzVk9onc',note:'Eleven teams and twenty-two drivers with the numbers they carry in 2026, including Norris on 1 as champion, Verstappen on 3 and Lindblad on 41. Team colours are approximations chosen so the field stays legible on the map; the racing, the results and the radio are all simulated.'},{title:'[E] Circuit de Monaco centreline — f1-circuits dataset (mc-1929)',url:'https://github.com/bacinger/f1-circuits',note:'The third circuit: 3.337 km, corner radii floored at 14 m and the curvature window narrowed to suit corners an order of magnitude tighter than the other two. The lap that results is 1:12.76 at 165.1 km/h against Verstappen 1:12.909 in 2021 at 164.8 km/h. The slowest corner comes out at 56 km/h where the Grand Hotel hairpin is nearer 47, and top speed at 307 km/h against about 290 through the tunnel.'},{title:'[1] FIA 2026 Formula 1 Regulations — Section B Sporting, Issue 08, 5 August 2026',url:'https://www.fia.com/system/files/documents/fia_2026_f1_regulations_-_section_b_sporting_-_iss_08_-_2026-08-05_7.pdf',note:'Reference points: B1.3 authority; B1.6 pit-lane safety; B1.9 penalties; B5.6–B5.11 formation and start; B5.13 Safety Car; B5.14.2 non-resumption countback; B5.15 resumption. The specific sanction, sensor values and console syntax are fictional scenario choices.'},{title:'[2] FIA 2026 Formula 1 Regulations — Section A General Provisions, Issue 03, 25 June 2026',url:'https://www.fia.com/system/files/documents/fia_2026_f1_regulations_-_section_a_general_provisions_-_iss_03_-_2026-06-25.pdf',note:'A2.2.1 supplies distance-based points bands and the minimum consecutive racing-lap condition. The 75% points threshold is not an instruction to end a race and does not establish safe conditions for a restart.'}]
+ references:[{title:'[A] Jeddah Corniche Circuit centreline — f1-circuits dataset (sa-2021)',url:'https://github.com/bacinger/f1-circuits',note:'The surveyed track trace this simulator draws and drives. Projected to metres about the circuit centroid, rotated so the long axis lies across the panel, smoothed at roughly a 45 m scale and floored at a 55 m corner radius. Lap distance is set to the official 6.174 km.'},{title:'[B] Brembo braking data, Saudi Arabian Grand Prix',url:'https://www.brembo.com/en/company/news/2023-formula-1-saudi-arabia-gp-brembo-brakes',note:'Turn 1 from 325 to 116 km/h over 115 m in 2.26 s at a 4.5 g peak, Turn 27 from 319 to 113 km/h at 4.9 g, eight braking zones and roughly 15 per cent of the lap on the brakes. These measured numbers are what the braking and grip model is fitted to; the reference lap that results is 1:28.4 at 251 km/h, against a real pole of about 1:28.3 and a race record of 1:30.734.'},{title:'[C] Silverstone Circuit centreline — f1-circuits dataset (gb-1948)',url:'https://github.com/bacinger/f1-circuits',note:'The second circuit, prepared the same way as Jeddah: 5.891 km, corner radii floored at 65 m. The lap that results is 1:27.4 at 242.6 km/h, against Verstappen 1:27.097 in 2020 at 243.5 km/h, with the slowest corner at 96 km/h where Luffield is measured in the high nineties.'},{title:'[D] 2026 Formula 1 entry list and driver numbers',url:'https://www.formula1.com/en/latest/article/all-the-2026-f1-driver-numbers-confirmed-in-full.5rh7o9mPntG7NerzVk9onc',note:'Eleven teams and twenty-two drivers with the numbers they carry in 2026, including Norris on 1 as champion, Verstappen on 3 and Lindblad on 41. Team colours are approximations chosen so the field stays legible on the map; the racing, the results and the radio are all simulated.'},{title:'[E] Circuit de Monaco centreline — f1-circuits dataset (mc-1929)',url:'https://github.com/bacinger/f1-circuits',note:'The third circuit: 3.337 km, corner radii floored at 14 m and the curvature window narrowed to suit corners an order of magnitude tighter than the other two. The lap that results is 1:12.76 at 165.1 km/h against Verstappen 1:12.909 in 2021 at 164.8 km/h. The slowest corner comes out at 56 km/h where the Grand Hotel hairpin is nearer 47, and top speed at 307 km/h against about 290 through the tunnel.'},{title:'[F] Sao Paulo, Austin, Miami, Las Vegas and Zandvoort — f1-circuits dataset',url:'https://github.com/bacinger/f1-circuits',note:'Five more surveyed centrelines, each one calibrated the same way: the smoothing scale, corner-radius floor and curvature window are searched until the reference lap matches that circuit\u2019s published race lap record. All five land inside 1.2 per cent of it — Interlagos 1:10.57 against 1:10.540, Austin 1:35.37 against 1:36.169, Miami 1:29.81 against 1:29.708, Las Vegas 1:34.81 against 1:34.876 and Zandvoort 1:10.92 against 1:11.097.'},{title:'[G] FIA Formula 1 Sporting Regulations — penalties and penalty points',url:'https://www.fia.com/sites/default/files/fia_2025_formula_1_sporting_regulations_-_issue_1_-_2024-07-31.pdf',note:'The penalty catalogue and how each is served: five and ten second penalties taken stationary at the next stop before any work or added to race time, drive-through, ten second stop-and-go, reprimand, and penalty points on the Super Licence with a one-event suspension at twelve. The separation of Race Control from the stewards, and the track limits ladder that ends in a black-and-white flag and then a referral, follow the same practice.'},{title:'[1] FIA 2026 Formula 1 Regulations — Section B Sporting, Issue 08, 5 August 2026',url:'https://www.fia.com/system/files/documents/fia_2026_f1_regulations_-_section_b_sporting_-_iss_08_-_2026-08-05_7.pdf',note:'Reference points: B1.3 authority; B1.6 pit-lane safety; B1.9 penalties; B5.6–B5.11 formation and start; B5.13 Safety Car; B5.14.2 non-resumption countback; B5.15 resumption. The specific sanction, sensor values and console syntax are fictional scenario choices.'},{title:'[2] FIA 2026 Formula 1 Regulations — Section A General Provisions, Issue 03, 25 June 2026',url:'https://www.fia.com/system/files/documents/fia_2026_f1_regulations_-_section_a_general_provisions_-_iss_03_-_2026-06-25.pdf',note:'A2.2.1 supplies distance-based points bands and the minimum consecutive racing-lap condition. The 75% points threshold is not an instruction to end a race and does not establish safe conditions for a restart.'}]
 };
 
 /* ---------------------------------------------------------------------------
@@ -1199,8 +1417,9 @@ function recordRace(race){season.races.push(race);saveSeason();}
 function standings(){
  const drivers=new Map(),teams=new Map();
  for(const r of season.races)for(const row of r.rows){
-  const d=drivers.get(row.id)||{id:row.id,name:row.name,team:row.team,points:0,wins:0,podiums:0,per:{}};
+  const d=drivers.get(row.id)||{id:row.id,name:row.name,code:row.code,team:row.team,points:0,wins:0,podiums:0,lp:0,rep:0,per:{}};
   d.points+=row.points||0;d.per[r.at]=row.points||0;
+  d.lp+=row.lp||0;d.rep+=row.rep||0;d.code=row.code||d.code;
   if(row.position===1)d.wins++;
   if(row.position&&row.position<=3)d.podiums++;
   d.team=row.team;drivers.set(row.id,d);
@@ -1213,6 +1432,7 @@ function standings(){
 }
 const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clock=t=>`${String(Math.floor(t/3600)).padStart(2,'0')}:${String(Math.floor(t/60)%60).padStart(2,'0')}:${String(Math.floor(t)%60).padStart(2,'0')}`;
+let lastFlag=null;
 let sim=new RaceEngine(),selected=16,compare=55,replayLive=true,projection=false,radioMode='team',lastRender=0,lastFrame=performance.now(),toastUntil=0;
 const svg=(view,body)=>`<svg viewBox="${view}" role="img" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
 function carShape(c,p,large=false){const sel=c.id===selected,col=c.status==='RETIRED'?'#8A8D94':c.color,r=large?6:5;
@@ -1466,6 +1686,10 @@ function comms(){
    +`<p>${esc(m.text)}</p></article>`).join('');
   if(!html)html='<p class="empty">Nothing transmitted yet. Choose a recipient and a call above.</p>';
  }else if(radioMode==='radio'){
+  html=sim.messages.map(m=>`<article class="message rcm"><span class="time">LAP ${m.lap} · ${clock(m.time)}</span>`
+   +`<h3>${esc(m.category)}</h3><p class="mono">${esc(m.text)}</p></article>`).join('');
+  if(!html)html='<p class="empty">Race Control has not published a message yet.</p>';
+ }else if(radioMode==='ops'){
   html=sim.events.map(e=>`<article class="message"><span class="time">${clock(e.time)}</span><h3>[${esc(e.channel)}]</h3><p>${esc(e.message)}</p></article>`).join('');
  }else{
   const ds=sim.decisions.filter(e=>!pick||(sim.car(e.id)||{}).team===pick);
@@ -1473,7 +1697,9 @@ function comms(){
  }
  if($('#comms').innerHTML!==html)$('#comms').innerHTML=html||'<p class="empty">Nothing on this channel yet.</p>';
 }
-function render(){const flagColor={GREEN:'#1F7A4D',YELLOW:'#8A7400',VSC:'#DD6E12',SC:'#DD6E12',RED:'#B5232B'};$('#phase').textContent=sim.phase.replaceAll('_',' ');$('#lap').textContent=`LAP ${String(Math.min(sim.lap,sim.totalLaps)).padStart(2,'0')} / ${sim.totalLaps}`;$('#clock').textContent=clock(sim.time);$('#flag').textContent=sim.phase==='FINISHED'?'FINISHED':sim.flag;$('#flag').style.color=flagColor[sim.flag];document.querySelectorAll('.flags button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.command===sim.flag));$('#play').textContent=sim.paused?'Run':'Pause';$('#circuit-line').textContent=`${CIRCUIT.name.toUpperCase()} · ${CIRCUIT.event}`;radar();timing();cornerView();pitView();telemetry();operations();comms();}
+function render(){const flagColor={GREEN:'#1F7A4D',YELLOW:'#8A7400',VSC:'#DD6E12',SC:'#DD6E12',RED:'#B5232B'};$('#phase').textContent=sim.phase.replaceAll('_',' ');$('#lap').textContent=`LAP ${String(Math.min(sim.lap,sim.totalLaps)).padStart(2,'0')} / ${sim.totalLaps}`;$('#clock').textContent=clock(sim.time);$('#flag').textContent=sim.phase==='FINISHED'?'FINISHED':sim.flag;$('#flag').style.color=flagColor[sim.flag];document.querySelectorAll('.flags button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.command===sim.flag));
+ if(lastFlag!==sim.flag){lastFlag=sim.flag;sim.rcm('FLAG',{GREEN:'TRACK CLEAR - GREEN FLAG',YELLOW:'YELLOW FLAG - FULL COURSE',
+  VSC:'VIRTUAL SAFETY CAR DEPLOYED',SC:'SAFETY CAR DEPLOYED',RED:'RED FLAG - SESSION SUSPENDED'}[sim.flag]||sim.flag);}$('#play').textContent=sim.paused?'Run':'Pause';$('#circuit-line').textContent=`${CIRCUIT.name.toUpperCase()} · ${CIRCUIT.event}`;radar();timing();cornerView();pitView();telemetry();operations();comms();}
 function toast(message){$('#toast').textContent=message;$('#toast').style.display='block';toastUntil=performance.now()+6500;}
 function modal(title,body){$('#modal-title').textContent=title;$('#modal-body').innerHTML=body;if(!$('#modal').open)$('#modal').showModal();}
 function review(id){const i=sim.incidents.find(x=>x.id===Number(id))??sim.incidents.find(x=>x.status==='REVIEW');if(!i)return toast('No incident is awaiting review.');const actions=i.status!=='REVIEW'?[]:i.type==='release'?[['penalty5','Confirm stewards 5-second decision']]:i.type==='wing'?[['wing','Refer for post-race inspection']]:i.type==='apex'?[['return','Order position return'],['penalty10','Confirm stewards 10-second decision']]:i.type==='grid'?[['grid','Verify repositioned Car 12']]:i.type==='impact'?[['SC','Deploy full Safety Car'],['medical','Dispatch Medical Car']]:i.type==='weather'?[['RED','Red-flag race']]:[];let scene=(i.type==='apex'?$('#corner').innerHTML:i.type==='release'?$('#pitcam').innerHTML:i.type==='impact'||i.type==='weather'||i.type==='grid'?$('#radar').innerHTML:'').replace(/\sid="rl-[^"]*"/g,'');modal(i.title,`<p class="legend">STEWARDAI PRE-SCREEN · ${esc(i.status)} · Lap ${i.lap} · ${clock(i.time)}</p>${scene}<div class="evidence">${esc(i.evidence)}</div><p>${i.type==='wing'?'This is a simulated dynamic sensor cue, not a certified load test. Log it separately from the release decision.':i.type==='apex'?'Use the whole approach, apex and exit. An axle-ahead measurement alone does not prove the car could hold a fair line.':i.type==='release'?'Five seconds is the requested fictional scenario outcome after stewards review. Race Control communicates and implements the decision.':'Confirm the evidence and choose a Race Control action.'}</p><div class="modal-actions">${actions.map(([a,b])=>`<button class="primary" data-command="${a}">${b}</button>`).join('')}${i.status==='REVIEW'&&['release','wing','apex'].includes(i.type)?`<button data-dismiss="${i.id}">Record no further action</button>`:''}</div><p class="legend">Scenario evidence is authored; live driver decisions and race order continue independently. Pause the simulation if you need more review time.</p>`);}
@@ -1489,11 +1715,12 @@ function championship(){
   +`<td><span style="color:${tCol(d.team)}">${d.id}</span> ${esc(d.name)}</td>`
   +`<td>${esc(tName(d.team))}</td>`
   +races.map(r=>`<td>${d.per[r.at]??'—'}</td>`).join('')
+  +`<td class="${d.lp>=12?'danger':''}">${d.lp||'—'}</td>`
   +`<td><b>${d.points}</b></td></tr>`).join('');
  modal('Championship standings',
   (races.length?'':'<p class="empty">No race has been classified yet. Finish a race — or use the weather scenario and the no-resumption countback — and it will be filed here.</p>')
-  +`<p class="legend">${races.length} race${races.length===1?'':'s'} filed · points use the FIA distance bands the classification already applies</p>`
-  +(races.length?`<h3>Drivers</h3><div style="overflow-x:auto"><table class="result-table"><thead><tr><th>Pos</th><th>Driver</th><th>Team</th>${head}<th>Pts</th></tr></thead><tbody>${body}</tbody></table></div>`
+  +`<p class="legend">${races.length} race${races.length===1?'':'s'} filed · championship points use the FIA distance bands the classification applies · PEN is Super Licence penalty points, twelve of which means a one-event suspension</p>`
+  +(races.length?`<h3>Drivers</h3><div style="overflow-x:auto"><table class="result-table"><thead><tr><th>Pos</th><th>Driver</th><th>Team</th>${head}<th title="Super Licence penalty points">Pen</th><th>Pts</th></tr></thead><tbody>${body}</tbody></table></div>`
    +`<h3>Constructors</h3><table class="result-table"><thead><tr><th>Pos</th><th>Team</th><th>Pts</th></tr></thead><tbody>`
    +st.teams.map((t,i)=>`<tr><td>${i+1}</td><td><span style="color:${tCol(t.id)}">■</span> ${esc(tName(t.id))}</td><td><b>${t.points}</b></td></tr>`).join('')
    +`</tbody></table><h3>Races</h3><table class="result-table"><thead><tr><th>Round</th><th>Event</th><th>Laps</th><th>Winner</th></tr></thead><tbody>`
@@ -1510,10 +1737,27 @@ document.addEventListener('click',e=>{const car=e.target.closest('[data-car]');i
 $('#play').onclick=()=>{if(sim.phase==='FORMATION_READY')sim.command('formation');else sim.paused=!sim.paused;render();};$('#rate').onchange=e=>sim.rate=Number(e.target.value);$('#load').onclick=()=>{const rate=sim.rate;sim.checkpoint(Number($('#scenario').value));sim.rate=rate;replayLive=true;$('#replay').value=40;render();toast('Scenario checkpoint loaded and paused. Press Run when ready.');};$('#weather').oninput=e=>{sim.weather=Number(e.target.value)/100;render();};$('#projection').onclick=()=>{projection=!projection;radar();};$('#replay').oninput=()=>{replayLive=false;radar();};$('#live').onclick=()=>{replayLive=true;$('#replay').value=40;radar();};$('#script').onclick=()=>modal('Full production script · 5 scenarios',scriptBody());$('#help').onclick=()=>{modal('Operating guide',`<p>You supervise <b>12 autonomous utility-based game-AI drivers</b>. Their attack, defence, conservation and pit choices depend on traffic, tyre wear, energy and water. No API key or cloud model is required.</p><ol class="modal-guide"><li><b>Start:</b> Begin formation, verify Car 12, arm the lights, then open the pit exit once the field clears. Use Run/Pause and pace to control simulation time.</li><li><b>Supervise:</b> Select a car for comparative telemetry and decision scores. Open StewardAI evidence to confirm sporting decisions, order a position return or preserve technical findings.</li><li><b>Recover:</b> Full Safety Car → Medical Car → CMO clearance → barrier repair → circuit release → eligible unlapping → following lap → SC in this lap.</li><li><b>Weather:</b> Red flag → pit-lane queue → assess conditions. Lower the surface-water slider to explore a restart. No resumption reconstructs the countback snapshot and points.</li><li><b>Explore:</b> Load any of the five paused checkpoints, or run the full 50-lap race. Incidents are authored teaching events; the AI race order is computed live.</li></ol><h3>The circuit and the lap model</h3><p>The track is the <b>Jeddah Corniche Circuit</b>: 6.174 km, 27 corners, 50 laps. Its centreline is the surveyed trace from the open <i>f1-circuits</i> dataset, projected to metres, rotated to fit the panel and smoothed at about a 45 m scale, with corner radii floored at 55 m because the raw 40 m survey spacing otherwise turns real corners into polygon vertices.</p><p>Speed is not scripted. Grip splits into a mechanical term and a downforce term that grows with the square of speed, and engine power is balanced against drag, so every apex speed and every top speed falls out of the geometry. The envelope is calibrated against published figures for this circuit — Brembo's Turn 1 brake trace (325 to 116 km/h over 115 m at 4.5 g) and Turn 27 (319 to 113 km/h, 4.9 g). The reference lap that comes out is <b id="guide-ref">—</b> at <b id="guide-avg">—</b>, against a real pole of about 1:28 and Hamilton's 1:30.734 record; in race trim, with fuel and tyre wear, the cars run 1:31 to 1:34.</p><h3>Circuits</h3><p>Two tracks, switched from the toolbar. Each centreline is the surveyed trace from the open <i>f1-circuits</i> dataset, projected to metres, rotated to fit the panel and smoothed at about a 45 m scale, with corner radii floored at what the published apex speeds imply. Changing circuit rebuilds the geometry, the racing line and the speed profile, and starts a fresh race.</p>
 <ul class="modal-guide">
 <li><b>Jeddah Corniche</b> — 6.174 km, 27 corners, 50 laps, three DRS zones. Reference lap <b>1:28.4</b> at 251 km/h against a real pole near 1:28.3 and Hamilton's 1:30.734 record.</li>
+<li><b>Sao Paulo (Interlagos)</b> — 4.309 km, 71 laps. Reference lap 1:10.57 against Bottas's 1:10.540.</li>
+<li><b>Austin (Circuit of the Americas)</b> — 5.513 km, 56 laps. Reference lap 1:35.37 against Leclerc's 1:36.169.</li>
+<li><b>Miami</b> — 5.412 km, 57 laps, three DRS zones. Reference lap 1:29.81 against Verstappen's 1:29.708.</li>
+<li><b>Las Vegas</b> — 6.201 km, 50 laps. Reference lap 1:34.81 against Norris's 1:34.876, and the highest top speed of the eight at 342 km/h.</li>
+<li><b>Zandvoort</b> — 4.259 km, 72 laps. Reference lap 1:10.92 against Hamilton's 1:11.097.</li>
 <li><b>Monaco</b> — 3.337 km, 19 corners, 78 laps, one DRS zone. Reference lap <b>1:12.76</b> at 165 km/h against Verstappen's 1:12.909 record at 164.8. Its corner radii are floored at 14 m rather than the 55-65 m the modern circuits need, which is what lets the Grand Hotel hairpin exist at all; the model takes it at 56 km/h where the real one is nearer 47. Nothing else is changed for it — the field simply cannot pass on a track four metres wider than a car, which is the point of the place.</li>
 <li><b>Silverstone</b> — 5.891 km, 18 corners, 52 laps, two DRS zones. Reference lap <b>1:27.4</b> at 243 km/h against Verstappen's 1:27.097 record. Its character falls out of the geometry: flat through Copse and the Maggotts-Becketts sequence, and hard on the brakes for Village, Brooklands and Luffield, which at 96 km/h is the slowest corner either circuit has.</li></ul>
 <h3>The grid</h3><p>The 2026 field: eleven teams and twenty-two cars with their real numbers and drivers, the second car of each team in a lighter shade of the team colour. Skill and aggression are drawn per driver, so the order that emerges is the simulator's, not a prediction.</p>
 <h3>Tyres and strategy</h3><p>Every car starts on a plan — one stop or two, which compounds, and roughly which lap. Softs are worth about six tenths a lap over mediums and last around fifteen laps; hards give that back and last more than twice as long. A plan is a starting point: a driver who ruins a set, or who watches the car ahead stop first, will bring the stop forward, which is where an <b>undercut</b> comes from. Pit stops are driven, not teleported — the car brakes for the limiter before the entry line, runs the lane at 80 km/h, stops in its own team's box and rejoins before the first corner, for about twenty seconds lost.</p>
+<h3>How Race Control works here</h3><p>The two roles are kept apart, because in the real thing they are two different people. <b>Race Control</b> — you — runs the event: flags, the Safety Car, the pit exit, and the black-and-white and black-and-orange flags. It does not award penalties. What it does is <i>note</i> an incident and refer it. The <b>stewards</b> then investigate in their own time and return a decision, which Race Control publishes and the car serves.</p>
+<p>Everything they publish appears on the <b>Messages</b> tab in the form the official feed uses:</p>
+<p class="script-command">TRACK LIMITS - TURN 7 - CAR 5 (BOR) - LAP 8 - 2ND WARNING<br>INCIDENT INVOLVING CAR 43 (COL) NOTED - TRACK LIMITS - TURN 7<br>FIA STEWARDS: CAR 43 (COL) - TRACK LIMITS - TURN 7 - UNDER INVESTIGATION<br>FIA STEWARDS: CAR 43 (COL) - 5 SECOND TIME PENALTY - TRACK LIMITS - TURN 7</p>
+<p>Turn numbers are not labels typed in by hand: they are read off each circuit's own speed profile, so turn 7 is the seventh place on that lap where a car has to slow down.</p>
+<h3>Track limits</h3><p>Monitored automatically, the way the real system is. All four wheels beyond the white line at racing speed is an excursion, and the ladder runs: first warning, second warning, <b>black-and-white flag</b> on the third, and on the fourth it goes to the stewards, who have been giving five seconds and a penalty point for it. Cars run wide on their own — pushing on the exit, on old tyres, under pressure from behind — so the warnings accumulate without anyone scripting them.</p>
+<h3>Penalties</h3><ul class="modal-guide">
+<li><b>Five and ten second time penalties</b> are served at the car's next pit stop, stationary, before the crew may touch it. A car that never stops again has the time added to its race result instead — which is what the classification screen already did.</li>
+<li><b>Drive-through</b>: into the pit lane, through at the limiter, no stop. Roughly twenty seconds.</li>
+<li><b>Ten second stop-and-go</b>: stationary in its own box for ten seconds with no work done.</li>
+<li><b>Reprimand</b>: no time lost, but it is on the record.</li>
+<li><b>Penalty points</b> go on the driver's Super Licence and carry through the season on the standings screen. Twelve of them means a one-event suspension.</li></ul>
+<h3>Other flags</h3><p><b>Blue</b> for a car about to be lapped, <b>black-and-orange</b> for loose bodywork — the car has three laps to come in, and the damage is repaired at the stop.</p>
 <h3>The FIA channel</h3><p>The <b>FIA</b> tab is your own transmitter. Choose a recipient — every driver, a team principal, or the whole field — and a call: a driving standards warning, a black-and-white flag, a note that an incident is under investigation, a five or ten second penalty, or a summons. What you send lands on the car: a warned driver backs off for two minutes, a car already carrying a black-and-white flag has its <i>next</i> offence escalate to a penalty on its own, and a time penalty is served at that car's next stop. Warnings, flags and investigations are marked against the car in the timing tower, and principals do not always take a penalty quietly.</p>
 <h3>Championship</h3><p>Every classified race is filed to a season kept in this browser: driver and constructor standings, points by round and the winner of each. It builds up as circuits are added, and can be exported as JSON or cleared from the standings screen.</p>
 <h3>Team radio</h3><p>The comms panel carries every team's pit wall and driver on their own channel, filterable by team, so what each of the twenty-two drivers is about to do is readable without opening a telemetry panel: the plan they were given, the lap they are called in, whether a stop is an undercut or a tyre that has gone, and what they found on the out lap.</p>
@@ -1522,7 +1766,7 @@ $('#documents').onclick=()=>modal('Race Control document ledger',sim.documents.l
  radioMode=b.dataset.comms;
  document.querySelectorAll('[data-comms]').forEach(x=>x.classList.toggle('active',x===b));
  $('#fia-compose').hidden=radioMode!=='fia';
- $('#team-filter-row').hidden=radioMode==='fia'||radioMode==='radio';
+ $('#team-filter-row').hidden=radioMode!=='team'&&radioMode!=='ai';
  if(radioMode==='fia')fillFiaTargets();
  comms();});
 $('#team-filter').innerHTML='<option value="">All teams</option>'+TEAMS.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
