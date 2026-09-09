@@ -338,7 +338,7 @@ dialog{width:calc(100% - 16px);max-height:94dvh}
 <section class="panel tower" data-mobile="track"><div class="panel-head"><h2>Timing</h2><span>LIVE</span></div><div class="tower-head"><span>POS / CAR</span><span>INTERVAL</span></div><div id="timing"></div><div class="tower-foot" id="tower-note"><span>Click a car to inspect its decisions.</span></div></section>
 <section class="panel track" data-mobile="track"><div class="panel-head"><h2>Circuit</h2><div><button id="projection" class="small">2D / 3D</button><span class="live">LIVE POSITION</span></div></div><div id="radar" class="radar"></div><div class="map-footer"><span id="selected-sector">SECTOR MICRO-DELTAS</span><label>Replay <input id="replay" type="range" min="0" max="40" value="40" aria-label="Radar replay, latest at right"></label><button id="live" class="small">Live</button></div></section>
 <section class="cameras" data-mobile="track"><div class="panel"><div class="panel-head"><h2>Corner cam</h2><span id="corner-meta">—</span></div><div id="corner" class="camera"></div></div><div class="panel"><div class="panel-head"><h2>Pit lane</h2><span id="pit-light">EXIT RED</span></div><div id="pitcam" class="camera"></div></div></section>
-<section class="panel control" data-mobile="control"><div class="panel-head"><h2>Console</h2><span>HUMAN AUTHORITY</span></div><div class="next"><span>NEXT OPERATION</span><h3 id="next-title">Begin formation</h3><p id="next-copy">The field is ready. Car 41 will start from the pit lane.</p><button id="next" class="primary wide" data-command="formation">Begin formation lap</button></div><details><summary>Start &amp; pit protocol</summary><div class="button-grid"><button data-command="grid">Verify Car 12</button><button data-command="lights">Arm grid lights</button><button data-command="pit">Pit exit green</button></div></details><details><summary>Recovery &amp; Safety Car</summary><div class="button-grid"><button data-command="medical">Dispatch medical</button><button data-command="repair">Authorise repair</button><button data-command="unlap">Unlap eligible cars</button><button data-command="scin">SC in this lap</button></div><p class="status-line" id="recovery-state">Medical cover available · circuit clear</p></details><details><summary>Weather &amp; resumption</summary><label class="weather-control">Surface water <input id="weather" type="range" min="0" max="100" value="0"><span id="water">Dry</span></label><div class="button-grid"><button data-command="standing">Standing restart</button><button data-command="rolling">Rolling restart</button><button data-command="finish">No resumption / results</button></div></details><div class="panel-head inset"><h2>StewardAI</h2><span>PRE-SCREEN ONLY</span></div><div id="incidents"></div><button class="wide ledger" id="documents">Documents <span id="document-count">0</span></button><button class="wide ledger" id="qualifying">Starting grid</button><button class="wide ledger" id="championship">Championship <span id="race-count">0</span></button></section>
+<section class="panel control" data-mobile="control"><div class="panel-head"><h2>Console</h2><span>HUMAN AUTHORITY</span></div><div class="next"><span>NEXT OPERATION</span><h3 id="next-title">Begin formation</h3><p id="next-copy">The field is ready. Car 41 will start from the pit lane.</p><button id="next" class="primary wide" data-command="formation">Begin formation lap</button></div><details><summary>Start &amp; pit protocol</summary><div class="button-grid"><button data-command="grid">Verify Car 12</button><button data-command="lights">Arm grid lights</button><button data-command="pit">Pit exit green</button></div></details><details><summary>Recovery &amp; Safety Car</summary><div class="button-grid"><button data-command="medical">Dispatch medical</button><button data-command="repair">Authorise repair</button><button data-command="unlap">Unlap eligible cars</button><button data-command="scin">SC in this lap</button></div><p class="status-line" id="recovery-state">Medical cover available · circuit clear</p></details><details><summary>Weather &amp; resumption</summary><label class="weather-control">Surface water <input id="weather" type="range" min="0" max="100" value="0"><span id="water">Dry</span></label><button id="wx-auto" class="small wide" aria-pressed="true">Live weather · on</button><div class="button-grid"><button data-command="standing">Standing restart</button><button data-command="rolling">Rolling restart</button><button data-command="finish">No resumption / results</button></div></details><div class="panel-head inset"><h2>StewardAI</h2><span>PRE-SCREEN ONLY</span></div><div id="incidents"></div><button class="wide ledger" id="documents">Documents <span id="document-count">0</span></button><button class="wide ledger" id="qualifying">Starting grid</button><button class="wide ledger" id="championship">Championship <span id="race-count">0</span></button></section>
 <section class="panel telemetry" data-mobile="telemetry"><div class="panel-head"><h2>Telemetry</h2><div class="selectors"><label>Car <select id="car-select"></select></label><label>Compare <select id="compare-select"></select></label></div></div><div class="telemetry-layout"><div><div class="metrics" id="metrics"></div><div class="traces" id="traces"></div></div><div class="data-column"><h3>Biometric & impact</h3><div id="medical"></div><h3>Tyres &amp; strategy</h3><div id="technical"></div></div></div><div class="decision-card"><span>AUTONOMOUS DRIVER POLICY</span><h3 id="decision-title">Holding formation</h3><p id="decision-reason">Awaiting the director's signal.</p><div class="pressure" id="pressure-line"></div><div id="utilities"></div></div></section>
 <section class="panel radio" data-mobile="radio"><div class="panel-head"><h2>Comms</h2><span>7 ch</span></div><div class="radio-tabs"><button data-comms="team" class="active">Team</button><button data-comms="radio">Messages</button><button data-comms="ops">Control</button><button data-comms="fia">FIA</button><button data-comms="ai">Decisions</button></div><label class="comms-filter" id="team-filter-row">Team <select id="team-filter"><option value="">All teams</option></select></label>
 <div class="fia-compose" id="fia-compose" hidden>
@@ -414,6 +414,17 @@ const RESPONSES={
          {key:'medical',done:'Medical dispatched',waiting:'medical response'}],
  weather:[{key:'suspended',done:'Race suspended',waiting:'suspension'}]
 };
+/* How each compound performs against standing water, 0-1 as a multiplier on
+   pace. Slicks fall off a cliff, inters peak in the middle and wets want it
+   properly flooded - so the crossovers land where they do in life: onto
+   inters at about two tenths of water, onto wets past six. */
+const WETGRIP={
+ SOFT:w=>1-.60*w, MEDIUM:w=>1-.58*w, HARD:w=>1-.56*w,
+ INTER:w=>.94-.18*Math.abs(w-.45),
+ WET:w=>.90-.16*Math.abs(w-.90)
+};
+const wetGrip=(compound,w)=>(WETGRIP[compound]||WETGRIP.MEDIUM)(w);
+const bestFor=w=>['SOFT','MEDIUM','HARD','INTER','WET'].reduce((a,b)=>wetGrip(b,w)>wetGrip(a,w)?b:a);
 const COMPOUNDS={
  SOFT:  {pace:1.007,wear:.00050,mark:'S',colour:'#D93A45'},
  MEDIUM:{pace:1.000,wear:.00032,mark:'M',colour:'#B08900'},
@@ -756,7 +767,7 @@ const insideAhead=d=>{const k=lerpArr(kcen,d+70);return Math.abs(k)<1/260?0:(k>0
 
 function pointsFor(completed,totalLaps,greenLaps){if(greenLaps<2||completed<2)return {band:'No points',points:[]};const r=completed/totalLaps;return r<.25?{band:'Under 25%',points:[6,4,3,2,1]}:r<.5?{band:'25–50%',points:[13,10,8,6,5,4,3,2,1]}:r<.75?{band:'50–75%',points:[19,14,12,10,8,6,4,3,2,1]}:{band:'Full points',points:[25,18,15,12,10,8,6,4,2,1]};}
 class RaceEngine{
- constructor(seed=2026){this.seed=seed>>>0;this.time=0;this.nextSample=0;this.phaseAt=0;this.startAt=0;this.scEndAt=0;this.resumeType=null;this.phase='FORMATION_READY';this.flag='GREEN';this.paused=true;this.rate=4;this.totalLaps=CIRCUIT.laps;this.weather=0;this.events=[];this.documents=[];this.incidents=[];this.burn=.018;this.decisions=[];this.teamRadio=[];this.fiaRadio=[];this.messages=[];this.stewardsQueue=[];this.filed=false;this.samples=[];this.replay=[];this.snapshots={};this.triggers=new Set();this.gridClear=false;this.pitExit=false;this.lights=0;this.greenLaps=0;this.greenStreak=0;this.lastLeaderLap=0;this.scTime=0;this.scLap=null;this.unlapLap=null;this.returnOrders=[];this.result=null;this.suspension=null;this.recovery=null;this.scenario=1;this.campaign=true;this.cars=GRID2026.map(([id,name,code,teamId,pace,craft,cons],i)=>{
+ constructor(seed=2026){this.seed=seed>>>0;this.time=0;this.nextSample=0;this.phaseAt=0;this.startAt=0;this.scEndAt=0;this.resumeType=null;this.phase='FORMATION_READY';this.flag='GREEN';this.paused=true;this.rate=4;this.totalLaps=CIRCUIT.laps;this.weather=0;this.events=[];this.documents=[];this.incidents=[];this.burn=94/(50*6000);this.liveWeather=true;this.sc={on:false,dist:0,speed:0,state:null,queue:[]};this.wx={rain:0,target:0,at:150,lineDry:0};this.decisions=[];this.teamRadio=[];this.fiaRadio=[];this.messages=[];this.stewardsQueue=[];this.filed=false;this.samples=[];this.replay=[];this.snapshots={};this.triggers=new Set();this.gridClear=false;this.pitExit=false;this.lights=0;this.greenLaps=0;this.greenStreak=0;this.lastLeaderLap=0;this.scTime=0;this.scLap=null;this.unlapLap=null;this.returnOrders=[];this.result=null;this.suspension=null;this.recovery=null;this.scenario=1;this.campaign=true;this.cars=GRID2026.map(([id,name,code,teamId,pace,craft,cons],i)=>{
   const team=TEAMS.find(t=>t.id===teamId),second=GRID2026.findIndex(g=>g[2]===teamId)!==i;
   return{id,name,code,team:teamId,teamName:team.name,boxSlot:TEAMS.indexOf(team),boxU:.34+TEAMS.indexOf(team)*.030+(second?.012:0),
    colour:second?lighten(team.colour,.42):team.colour,
@@ -784,6 +795,64 @@ class RaceEngine{
  get leader(){return this.order().find(c=>c.status!=='RETIRED')??this.cars[0];}
  get lap(){return Math.max(1,Math.floor((this.leader?.dist??0)/LENGTH)+1);}
  radio(channel,message){this.events.unshift({time:this.time,channel,message});if(this.events.length>140)this.events.length=140;}
+ /* ------------------------------ SAFETY CAR ------------------------------
+    A car on the circuit rather than a speed limit. It picks up the leader,
+    runs its own line at its own pace, and the field closes into a queue
+    behind it - which is why a Safety Car erases a twenty second lead and
+    why the restart is worth something. */
+ scTick(dt){
+  const sc=this.sc;
+  if(!sc.on)return;
+  const pace=clamp(lerpArr(VPROF,sc.dist)*.58,17,40);
+  sc.speed=sc.speed+clamp(pace-sc.speed,-dt*9,dt*6);
+  if(sc.state==='in'){
+   /* Withdrawn: it accelerates away and peels into the pit lane. */
+   sc.speed=Math.min(58,sc.speed+dt*7);
+   sc.dist+=sc.speed*dt;
+   if(pitProg(((sc.dist%LENGTH)+LENGTH)%LENGTH/LENGTH)>.5){sc.on=false;sc.state=null;}
+   return;
+  }
+  sc.dist+=sc.speed*dt;
+  /* The queue is the running order, less anyone in the pit lane. */
+  sc.queue=this.order().filter(c=>c.status==='RUNNING'&&!c.pitState).map(c=>c.id);
+ }
+ scSlot(c){
+  const i=this.sc.queue.indexOf(c.id);
+  return i<0?null:this.sc.dist-24*(i+1);
+ }
+ /* -------------------------------- WEATHER -------------------------------
+    Rain arrives, builds and passes. Standing water lags behind it, because a
+    circuit takes time to flood and longer to drain, and the racing line
+    dries first - which is why the crossover back to slicks always happens on
+    the line before it happens anywhere else. */
+ wxTick(dt){
+  const w=this.wx;
+  if(this.liveWeather){
+   w.at-=dt;
+   if(w.at<=0){
+    const r=this.random();
+    w.target=w.rain>.12?0:(r<.42?0:r<.78?.30+this.random()*.28:.72+this.random()*.28);
+    w.at=200+this.random()*400;
+    if(w.target>.25){
+     const mins=Math.round(w.at/60);
+     this.rcm('WEATHER',`RAIN FORECAST - ${w.target>.65?'HEAVY':'LIGHT'} - EXPECTED WITHIN ${Math.max(1,Math.round(3+this.random()*4))} MINUTES`);
+     for(const c of this.cars)this.pitWall(c,`Weather update: ${w.target>.65?'heavy rain':'light rain'} on the radar, about ${Math.max(2,mins-2)} minutes away. Stay on this tyre for now.`);
+    }else if(w.rain>.2)this.rcm('WEATHER','RAIN EASING - CONDITIONS IMPROVING');
+   }
+   w.rain=clamp(w.rain+clamp(w.target-w.rain,-dt*.0030,dt*.0016),0,1);
+  }
+  /* Water fills faster than it drains, and running cars pump it off. */
+  const drain=(this.flag==='GREEN'?.0019:.0009);
+  const before=this.weather;
+  this.weather=clamp(this.weather+(w.rain>this.weather?dt*.0021:-dt*drain),0,1);
+  /* Once the rain stops the line comes back before the rest of the road. */
+  w.lineDry=clamp(w.lineDry+(w.rain<.06&&this.weather>.02?dt*.0026:-dt*.006),0,1);
+  const step=(a,b,msg,cat)=>{if(before<a&&this.weather>=a||before>b&&this.weather<=b)this.rcm(cat||'WEATHER',msg);};
+  step(.18,-1,'TRACK SURFACE WET - SECTORS AFFECTED');
+  step(.60,-1,'HEAVY STANDING WATER - AQUAPLANING RISK');
+  step(9,.55,'STANDING WATER RECEDING');
+  step(9,.14,'TRACK DRYING - RACING LINE CLEAR');
+ }
  /* ------------------------------- CONTACT --------------------------------
     Two cars fighting over the same piece of road sometimes end up in each
     other. How likely depends on how committed the attacker is, how steady
@@ -848,6 +917,60 @@ class RaceEngine{
    reason:`Contact with ${this.tag(a===b?a:a)} at turn ${turn}`});
   this.decisions.length=Math.min(45,this.decisions.length);
  }
+ /* --------------------------- RADIO TRAFFIC ------------------------------
+    Rather than only speaking when something is decided, each pit wall works
+    through what is actually happening to its car - damage, a tyre going
+    away, the gap to the fight, the weather, the fuel, the end of the race -
+    and says the one thing that matters most right now, with the real
+    numbers in it. Drivers answer, and sometimes start it themselves. */
+ radioTick(){
+  if(this.phase!=='RACING'||this.time<this.startAt+20)return;
+  if(this.time-(this._radioAt||0)<5)return;
+  const order=this.order().filter(c=>c.status==='RUNNING');
+  if(!order.length)return;
+  this._radioTurn=((this._radioTurn||0)+1)%order.length;
+  const c=order[this._radioTurn];
+  if(c.pitState||this.time-(c.chatAt||0)<55)return;
+  const pos=order.indexOf(c)+1, ahead=order[pos-2], behind=order[pos];
+  const gapTo=x=>x?Math.abs(x.dist-c.dist)/Math.max(c.speed,35):99;
+  const gA=gapTo(ahead), gB=gapTo(behind);
+  const left=this.totalLaps-this.lap+1;
+  const tyre=COMPOUNDS[c.compound]||COMPOUNDS.MEDIUM;
+  const plan=c.plan&&c.plan.stops.find(x=>!x.done);
+  let said=null;
+  /* Most pressing first. */
+  if(c.orangeFlag)
+   said=[[0,'Front wing is damaged and we have the black and orange, you have to come in.'],
+         [1,'Understood, I can feel it in the high speed.']];
+  else if(this.weather>.2&&wetGrip(bestFor(this.weather),this.weather)-wetGrip(c.compound,this.weather)>.03)
+   said=[[1,`It is getting worse out there, I have no grip on these ${c.compound.toLowerCase()}s.`],
+         [0,`We know. ${bestFor(this.weather)} is the tyre, we are looking at the window now.`]];
+  else if(c.tyre<.33)
+   said=[[1,`These tyres are done, I am losing it everywhere.`],
+         [0,plan?`Copy. Target is lap ${plan.lap}, we need ${Math.max(1,plan.lap-this.lap)} more laps out of them.`
+                :'Copy, manage what is left, there is no stop coming.']];
+  else if(gA<1.1&&ahead)
+   said=[[0,`Gap to ${ahead.name} ${gA.toFixed(1)}, he is on ${c.tyreAge>ahead.tyreAge?'a fresher':'an older'} tyre. ${c.drsArmed?'You have DRS.':'Get into the window before the zone.'}`],
+         [1,gA<0.6?'I am all over the back of him, I just cannot get by.':'Copy, working on it.']];
+  else if(gB<1.1&&behind)
+   said=[[0,`${behind.name} is ${gB.toFixed(1)} behind and he has DRS. Defend the inside into the braking zone.`],
+         [1,'Yeah I see him. I will hold the line.']];
+  else if(left<=8&&pos<=10)
+   said=[[0,`${left} laps to go, P${pos}.${behind?` ${behind.name} is ${gB.toFixed(1)} back.`:''} Bring it home.`],
+         [1,'Copy, understood.']];
+  else if(c.fuel<22&&left>4)
+   said=[[0,'Fuel is marginal, we need a lift and coast into the last two corners.'],
+         [1,'Copy, lifting.']];
+  else if(c.ers<.15)
+   said=[[0,'Battery is low, we are in recovery for a lap. Do not use it on the straight.'],
+         [1,'Understood.']];
+  else if(c.tyreAge>0&&this.random()<.35)
+   said=[[0,`P${pos}, ${c.tyreAge} lap${c.tyreAge===1?'':'s'} on the ${c.compound.toLowerCase()}s${ahead&&gA<10?`, ${gA.toFixed(1)} to ${ahead.name}`:''}. Pace is good.`],
+         [1,'Copy that.']];
+  if(!said)return;
+  c.chatAt=this.time;this._radioAt=this.time;
+  for(const [who,text] of said)who?this.driver(c,text,true):this.pitWall(c,text,true);
+ }
  /* ------------------------------ QUALIFYING ------------------------------
     One flying lap each. Pace sets the time, and a driver who is less
     consistent has a wider spread and a real chance of a lap that never comes
@@ -868,9 +991,10 @@ class RaceEngine{
    .forEach((c,i)=>{c.expected=i+1;});
   this.pole=this.cars[0];
   /* Enough fuel for the distance and no more, which is what they run. */
-  /* Enough for the distance with the margin a real stint carries, so the
-     tank is never actually empty before the flag. */
-  this.burn=96/(this.totalLaps*REFLAP/RACEPACE*1.14);
+  /* Fuel goes by distance, not by time: a race stretched by rain or a
+     Safety Car burns the same to cover the same ground, which is why the
+     tank lasts and a slow race does not run it dry. */
+  this.burn=94/(this.totalLaps*LENGTH);
  }
  /* ------------------------------- PRESSURE -------------------------------
     Two things make a driver push past what is comfortable: a championship
@@ -915,7 +1039,7 @@ class RaceEngine{
   c.radioAt=this.time;
   this.teamRadio.unshift({time:this.time,lap:this.lap,team:c.team,teamName:c.teamName,
    id:c.id,name:c.name,colour:c.colour,from,text});
-  if(this.teamRadio.length>200)this.teamRadio.length=200;
+  if(this.teamRadio.length>280)this.teamRadio.length=280;
  }
  pitWall(c,text,urgent){this.teamSay(c,'PIT',text,urgent);}
 /* --------------------- OFFICIAL RACE CONTROL MESSAGES -------------------
@@ -1114,11 +1238,17 @@ class RaceEngine{
  pitCall(c){
   if(c.pitState||c.pitRequested||c.status==='RETIRED'||this.phase!=='RACING')return;
   if(this.flag==='RED')return;
-  const dry=c.compound!=='WET'&&c.compound!=='INTER';
-  if(this.weather>.5&&dry){
-   c.nextCompound='WET';c.pitRequested=true;
-   this.pitWall(c,'Standing water, box now for wets. Box this lap.',true);
-   this.driver(c,'Yeah it is undriveable out here, box.',true);
+  /* The crossover: change only when another compound is clearly better on
+     the water that is actually out there, so nobody pits for a shower that
+     is already passing. */
+  const w=this.weather, want=bestFor(w), have=c.compound;
+  const gain=wetGrip(want,w)-wetGrip(have,w);
+  if(want!==have&&gain>.045&&this.time-(c.wxPitAt||0)>90){
+   c.wxPitAt=this.time;c.nextCompound=want;c.pitRequested=true;
+   const wet=want==='WET'||want==='INTER';
+   this.pitWall(c,wet?`${want==='WET'?'Full wets':'Inters'} are the call — we are losing ${(gain*100).toFixed(0)} per cent out there. Box, box.`
+    :`Track is drying, ${want.toLowerCase()}s are quicker now. Box this lap.`,true);
+   this.driver(c,wet?'Yeah I have got nothing, box.':'Agreed, the line is dry. Box.',true);
    return;
   }
   const plan=c.plan;if(!plan)return;
@@ -1162,11 +1292,15 @@ class RaceEngine{
  if(action==='grid'){this.gridClear=true;const i=this.incidents.find(x=>x.type==='grid');if(i)i.status='RESOLVED';this.doc('Grid alignment verified','Car 12 repositioned. No pre-lights-out movement established.');return say('Car 12 is correctly positioned. Grid sensor and overhead image agree.');}
  if(action==='lights'){if(this.phase!=='GRID'||!this.gridClear)return deny('Hold the start. The field must be stationary and Car 12 verified.');this.phase='LIGHTS';this.phaseAt=this.time;this.paused=false;this.lights=1;return say('Grid clear. Arm the five-light sequence.');}
  if(action==='pit'){if(!['RACING','SC_RESTART'].includes(this.phase)||this.time-this.startAt<14||this.flag==='RED')return deny('Pit exit held: the start field or safety interlock has not cleared.');this.pitExit=true;this.car(41).pitState=null;this.doc('Pit exit green','Car 41 released after the start field passed the exit.');return say('Pit exit green. Car 41 may join behind the field.');}
- if(['GREEN','YELLOW','VSC','SC','RED'].includes(action)){if(!['RACING','SC_RESTART','RED_RETURN','SUSPENDED'].includes(this.phase))return deny('Start or resumption procedure is required.');if(action==='GREEN'&&(this.flag==='SC'||this.flag==='RED'||this.recovery&&!this.recovery.repaired))return deny('Complete the recovery and restart procedure first.');if(this.recovery&&!this.recovery.repaired&&['YELLOW','VSC'].includes(action))return deny('Full Safety Car or red flag is required while this recovery remains unsafe.');if(this.flag==='RED'&&action!=='RED')return deny('Use the assessed resumption procedure.');if(action==='SC'){if(this.flag!=='SC'){this.scTime=this.time;this.scLap=this.lap;}this.flag='SC';this.answer('impact','neutralised');this.doc('Safety Car deployed','Full-course yellow and SC panels. No overtaking.');return say('SAFETY CAR DEPLOYED. Reduce speed and form the queue.');}if(action==='RED'){if(this.flag==='RED')return deny('The race is already suspended.');this.suspension={lap:this.lap,completed:this.lap-1,time:this.time,greenLaps:this.greenLaps,order:this.order().map(c=>({id:c.id,dist:c.dist,status:c.status}))};this.flag='RED';this.answer('impact','neutralised');this.answer('weather','suspended');this.phase='RED_RETURN';this.phaseAt=this.time;this.pitExit=false;this.doc('Race suspended',`Red signal on lap ${this.lap}; ${this.lap-1} completed. Freeze timing and return slowly to the pit lane.`);this.radio('TEAM PRINCIPAL - TEAM A','If we restart, we want a standing start. We lost position through strategy!');this.radio('TEAM PRINCIPAL - TEAM B','Rolling if it clears, or end it. We have passed seventy-five percent!');return say('RED FLAG. No overtaking. Return slowly to the pit lane. Points do not decide whether the circuit is safe.');}this.flag=action;this.doc(action+' flag','Signal issued to all marshal posts and teams.');return say(action+' flag. All posts acknowledge.');}
+ if(['GREEN','YELLOW','VSC','SC','RED'].includes(action)){if(!['RACING','SC_RESTART','RED_RETURN','SUSPENDED'].includes(this.phase))return deny('Start or resumption procedure is required.');if(action==='GREEN'&&(this.flag==='SC'||this.flag==='RED'||this.recovery&&!this.recovery.repaired))return deny('Complete the recovery and restart procedure first.');if(this.recovery&&!this.recovery.repaired&&['YELLOW','VSC'].includes(action))return deny('Full Safety Car or red flag is required while this recovery remains unsafe.');if(this.flag==='RED'&&action!=='RED')return deny('Use the assessed resumption procedure.');if(action==='SC'){if(this.flag!=='SC'){this.scTime=this.time;this.scLap=this.lap;}if(!this.sc.on){const L=this.leader;
+    this.sc={on:true,dist:(L?L.dist:0)+50,speed:40,state:'leading',queue:[]};
+    this.rcm('SAFETY CAR','SAFETY CAR DEPLOYED');}
+   this.flag='SC';this.answer('impact','neutralised');this.doc('Safety Car deployed','Full-course yellow and SC panels. No overtaking.');return say('SAFETY CAR DEPLOYED. Reduce speed and form the queue.');}if(action==='RED'){if(this.flag==='RED')return deny('The race is already suspended.');this.suspension={lap:this.lap,completed:this.lap-1,time:this.time,greenLaps:this.greenLaps,order:this.order().map(c=>({id:c.id,dist:c.dist,status:c.status}))};this.sc={on:false,dist:0,speed:0,state:null,queue:[]};
+   this.flag='RED';this.answer('impact','neutralised');this.answer('weather','suspended');this.phase='RED_RETURN';this.phaseAt=this.time;this.pitExit=false;this.doc('Race suspended',`Red signal on lap ${this.lap}; ${this.lap-1} completed. Freeze timing and return slowly to the pit lane.`);this.radio('TEAM PRINCIPAL - TEAM A','If we restart, we want a standing start. We lost position through strategy!');this.radio('TEAM PRINCIPAL - TEAM B','Rolling if it clears, or end it. We have passed seventy-five percent!');return say('RED FLAG. No overtaking. Return slowly to the pit lane. Points do not decide whether the circuit is safe.');}this.flag=action;this.doc(action+' flag','Signal issued to all marshal posts and teams.');return say(action+' flag. All posts acknowledge.');}
  if(action==='medical'){if(!this.recovery)return deny('No active impact response.');if(!['SC','RED'].includes(this.flag))return deny('Neutralise with full Safety Car or red flag before dispatching onto the protected route.');if(this.recovery.medicalAt!=null)return deny('Medical response already dispatched.');this.recovery.medicalAt=this.time;this.answer('impact','medical');this.radio('CHIEF MEDICAL OFFICER (CMO)','Medical Car dispatched on the protected route. Twenty-eight G is an assessment trigger, not a diagnosis.');this.doc('Medical dispatch','CMO and rescue team routed to Sector 2.');return say('Medical route protected. Deputy, hold marshals until the CMO releases the work area.');}
  if(action==='repair'){const r=this.recovery;if(!r||!r.medicalClear)return deny('Recovery work held until the medical team clears the work area.');if(r.repairAt!=null)return deny('Barrier repair is already in progress.');r.repairAt=this.time;this.doc('Barrier work authorised','Marshals and recovery crew protected by full neutralisation.');return say('Begin recovery and barrier repair. Report completion, inspection and personnel clear separately.');}
  if(action==='unlap'){if(this.flag!=='SC')return deny('Unlapping requires a Safety Car queue.');if(this.recovery&&!this.recovery.repaired)return deny('Barrier and personnel clearance required.');if(this.time-this.scTime<35)return deny('Wait for the field to form the Safety Car queue.');if(this.unlapLap!=null)return deny('Unlapping instruction is already active.');this.unlapLap=this.lap;let ids=[];for(const c of this.cars){if(c.status==='RUNNING'&&this.leader.dist-c.dist>=LENGTH*.95){c.unlapTarget=c.dist+LENGTH+35;ids.push(c.id);}}this.doc('LAPPED CARS MAY NOW OVERTAKE','Eligible cars: '+(ids.join(', ')||'none')+'. Monitor every pass and the following-lap condition.');return say('LAPPED CARS MAY NOW OVERTAKE. All eligible cars have been identified; no selective release.');}
- if(action==='scin'){if(this.phase==='SC_RESTART')return deny('Safety Car withdrawal is already armed.');if(this.flag!=='SC')return deny('Safety Car is not deployed.');if(this.recovery&&!this.recovery.repaired)return deny('Recovery and barrier inspection incomplete.');if(this.time-this.scTime<35)return deny('The field is still forming the queue.');const lapped=this.cars.some(c=>c.status==='RUNNING'&&this.leader.dist-c.dist>=LENGTH*.95);if(this.cars.some(c=>c.unlapTarget))return deny('Eligible cars are still completing the authorised pass.');if(lapped&&this.unlapLap==null)return deny('Complete the unlapping workflow first.');if(this.unlapLap!=null&&this.lap<=this.unlapLap)return deny('The Safety Car returns on the following lap after the unlapping message.');this.phase='SC_RESTART';this.scEndAt=(Math.floor(this.leader.dist/LENGTH)+1)*LENGTH;for(const c of this.cars)c.restartAt=(Math.floor(c.dist/LENGTH)+1)*LENGTH;this.radio('SAFETY CAR DRIVER','Lights out. Entering the pits this lap.');this.doc('Safety Car in this lap','Leader controls the pace. Each driver remains subject to their own line crossing.');return say('SAFETY CAR IN THIS LAP. No overtaking before the line.');}
+ if(action==='scin'){if(this.phase==='SC_RESTART')return deny('Safety Car withdrawal is already armed.');if(this.sc.on)this.sc.state='in';if(this.flag!=='SC')return deny('Safety Car is not deployed.');if(this.recovery&&!this.recovery.repaired)return deny('Recovery and barrier inspection incomplete.');if(this.time-this.scTime<35)return deny('The field is still forming the queue.');const lapped=this.cars.some(c=>c.status==='RUNNING'&&this.leader.dist-c.dist>=LENGTH*.95);if(this.cars.some(c=>c.unlapTarget))return deny('Eligible cars are still completing the authorised pass.');if(lapped&&this.unlapLap==null)return deny('Complete the unlapping workflow first.');if(this.unlapLap!=null&&this.lap<=this.unlapLap)return deny('The Safety Car returns on the following lap after the unlapping message.');this.phase='SC_RESTART';this.scEndAt=(Math.floor(this.leader.dist/LENGTH)+1)*LENGTH;for(const c of this.cars)c.restartAt=(Math.floor(c.dist/LENGTH)+1)*LENGTH;this.radio('SAFETY CAR DRIVER','Lights out. Entering the pits this lap.');this.doc('Safety Car in this lap','Leader controls the pace. Each driver remains subject to their own line crossing.');return say('SAFETY CAR IN THIS LAP. No overtaking before the line.');}
  if(action==='penalty5'||action==='penalty10'){const c=this.car(id||16);const n=action==='penalty5'?5:10;const incident=this.incidents.find(i=>i.cars.includes(c.id)&&i.status==='REVIEW'&&i.type===(n===5?'release':'apex'));if(!incident)return deny('Open the matching incident review before confirming a decision.');c.penalties.push({seconds:n,served:false,time:this.time});incident.status='PENALTY';this.doc('Stewards decision · Car '+c.id,`${n}-second time penalty. ${incident.evidence}`,'DECISION');return say(`Confirmed simulated stewards decision: ${n}-second penalty to Car ${c.id}. Notify the team and timing.`);}
  if(action==='wing'){const i=this.incidents.find(i=>i.type==='wing');if(!i||i.status!=='REVIEW')return deny('No new wing referral pending.');i.status='POST-RACE';this.doc('Technical referral · Car 16','Dynamic wing cue exceeds the fictional reference. Preserve raw data and assembly for physical load tests; no automatic disqualification.','REFERRAL');this.radio('TELEMETRY & SCRUTINEER ENGINEER','Wing data secured. Physical compliance tests remain necessary.');return say('Car 16 wing flex logged for post-race investigation. Classification remains provisional.');}
  if(action==='return'){if(this.car(16).returnTo)return deny('Position-return instruction is already active.');const i=this.incidents.find(x=>x.type==='apex'&&x.status==='REVIEW');if(!i)return deny('No position-return case is open.');this.car(16).returnTo=55;this.returnOrders.push({car:16,to:55,deadline:this.car(16).dist+LENGTH,incident:i.id});this.doc('Position return · Car 16','Return the advantage to Car 55 within one lap; unresolved case referred to stewards.');this.radio('RACE DIRECTOR','Instruct your driver to give the position back within 1 lap, or this goes to the Stewards as a 10-second penalty.');return say('That is the scenario referral recommendation; the stewards determine any penalty. Car 16, return the advantage safely.');}
@@ -1186,6 +1320,9 @@ class RaceEngine{
  if(this.phase==='LIGHTS'){this.lights=Math.min(5,1+Math.floor(this.time-this.phaseAt));if(this.time-this.phaseAt>6.4){this.phase='RACING';this.startAt=this.time;this.lights=0;this.strategise();this.doc('Race start','Five lights extinguished. Start transponder data retained.');this.radio('RACE DIRECTOR','Lights out. Race underway. Pit exit remains held until the field clears.');}return;}
  if(['FORMATION_READY','GRID','SUSPENDED'].includes(this.phase))return;
  if(this.phase==='RESUME_NOTICE'){if(this.time-this.phaseAt>=20){this.flag=this.resumeType==='rolling'?'SC':'GREEN';this.phase=this.resumeType==='rolling'?'SC_RESTART':'LIGHTS';this.phaseAt=this.time;this.cars.filter(c=>c.status==='RUNNING').forEach((c,i)=>{c.pitState=null;c.speed=0;c.dist=Math.floor(c.dist/LENGTH)*LENGTH-i*9;c.lat=c.lane=(i%2?1:-1)*2.6;c.latV=0;});if(this.resumeType==='rolling'){this.scEndAt=(Math.floor(this.leader.dist/LENGTH)+1)*LENGTH;this.cars.forEach(c=>c.restartAt=(Math.floor(c.dist/LENGTH)+1)*LENGTH);}this.radio('RACE DIRECTOR','Preparation complete. Execute the selected resumption procedure.');}return;}
+ this.wxTick(dt);
+ this.scTick(dt);
+ this.radioTick();
  this.stewardsTick();
  if(this.time>=(this._pressAt||0)){this._pressAt=this.time+4;this.updatePressure();}
  let ordered=this.order();const leader=ordered[0];const neutral=['SC','VSC','RED'].includes(this.flag);for(let i=0;i<ordered.length;i++){const c=ordered[i];if(c.status==='RETIRED')continue;if(c.nextDecision<=this.time){this.choose(c);c.nextDecision=this.time+.7+this.random()*.5;}const old=c.dist,frac=((c.dist%LENGTH)+LENGTH)%LENGTH/LENGTH;c.aside=0;
@@ -1211,7 +1348,13 @@ class RaceEngine{
     it, because it is carrying a hundred kilos it will have burned by the
     end. Until now the fuel load was counted and then ignored. */
  const fuelGain=1+.033*(1-c.fuel/100);
- const grip=RACEPACE*tyre.pace*c.skill*fuelGain*(.94+.06*c.tyre)*(1+c.pressure*.004)*(c.mistakeUntil>this.time?.87:1);
+ /* A car sitting on the racing line finds a drier road than one running
+    beside it, which is what makes overtaking in the wet the gamble it is. */
+ const onLine=1-Math.min(1,Math.abs(c.lat/USABLE-ideal));
+ const water=clamp(this.weather*(1-this.wx.lineDry*.62*onLine),0,1);
+ c.water=water;
+ const grip=RACEPACE*tyre.pace*wetGrip(c.compound,water)*c.skill*fuelGain
+  *(.94+.06*c.tyre)*(1+c.pressure*.004)*(c.mistakeUntil>this.time?.87:1);
  const offLine=Math.abs(c.lat/USABLE-ideal);
  let target=pace*grip*(1-.06*offLine*(1-this.weather*.85));
  if(c.decision==='Attack')target*=1.012+.022*c.ers;if(c.decision==='Defend')target*=.998;if(c.decision==='Conserve')target*=.968;
@@ -1224,9 +1367,18 @@ class RaceEngine{
   if(gapAhead<42&&pace<72)target*=1-.17*(1-gapAhead/42);
  }
  if(c.drs)target=Math.min(VMAX+6,target*1.055);
- if(this.weather>.15)target*=1-this.weather*(c.compound==='WET'?.24:.48);
  let cap=Infinity;
- if(this.flag==='YELLOW')cap=48;if(this.flag==='VSC')cap=36;if(this.flag==='SC')cap=31;if(this.flag==='RED')cap=20;
+ if(this.flag==='YELLOW')cap=48;if(this.flag==='VSC')cap=36;if(this.flag==='RED')cap=20;
+ if(this.flag==='SC'){
+  cap=52;
+  /* Each car has a place in the queue and drives to it: the ones a long way
+     back close at speed, the ones in position sit at the Safety Car's pace. */
+  if(this.sc.on&&!c.pitState&&!c.unlapTarget){
+   const want=this.scSlot(c);
+   if(want!=null)target=clamp(this.sc.speed+(want-c.dist)*.30,6,52);
+   else target=Math.min(target,31);
+  }else target=Math.min(target,31);
+ }
  if(c.restartAt&&this.flag==='GREEN')cap=Math.min(cap,34);
  if(c.unlapTarget)cap=56;
  target=Math.min(target,cap);
@@ -1236,7 +1388,12 @@ class RaceEngine{
    and a defender covering that side actually keeps the place. */
  const alongside=!!ahead&&Math.abs(c.lat-ahead.lat)>2.2;
  if(ahead&&!c.unlapTarget&&!c.returnTo&&!ahead.returnTo){
-  if(neutral||c.restartAt)target=Math.min(target,Math.max(0,ahead.speed-(22-Math.min(22,gapAhead))*.8));
+  /* Behind the Safety Car a car is allowed to close right up on the one in
+     front - that is the whole point of the queue - so it holds to its slot
+     rather than to the car ahead until it is nose to tail. */
+  const queued=this.sc.on&&!c.pitState&&!c.unlapTarget&&this.scSlot(c)!=null;
+  if(queued)target=Math.min(target,Math.max(0,ahead.speed+(gapAhead-16)*1.1));
+  else if(neutral||c.restartAt)target=Math.min(target,Math.max(0,ahead.speed-(22-Math.min(22,gapAhead))*.8));
   else{
    /* A driver who is not committed to a move sits back about a second, where
       the car still works, rather than queueing nose to tail. Deciding to
@@ -1333,7 +1490,7 @@ class RaceEngine{
   }
   else if(c.decision==='Defend'){c.attackSide=0;want=want*.55+(insideAhead(c.dist)||Math.sign(want)||1)*.55;}
   else c.attackSide=0;
-  if(this.weather>.25)want+=(this.weather-.25)*.9*(-Math.sign(ideal)||1);
+  if(water>.25)want+=(water-.25)*.55*(-Math.sign(ideal)||1);
   for(let k=Math.max(0,i-2);k<Math.min(ordered.length,i+3);k++){
    if(k===i)continue;const o=ordered[k];
    if(o.status==='RETIRED'||o.pitState)continue;
@@ -1357,17 +1514,17 @@ class RaceEngine{
     attack or standing water. It costs grip for about a second and pushes the
     car wide, which is often enough to lose the place. */
  if(!c.pitState&&!neutral&&c.status==='RUNNING'&&c.mistakeUntil<this.time&&
-    this.random()<dt*(.0002+(pressured?.0008:0)+(1-c.tyre)*.0012+(c.decision==='Attack'?.0005:0)+this.weather*.006)
+    this.random()<dt*(.0002+(pressured?.0008:0)+(1-c.tyre)*.0012+(c.decision==='Attack'?.0005:0)+water*.010)
      *(1.7-c.steadiness)*(1+c.pressure*1.3)){
   c.mistakeUntil=this.time+1+this.random()*.9;
   this.decisions.unshift({time:this.time,id:c.id,action:'Lock-up',reason:pressured?'Locked the inside front defending into the braking zone':'Missed the braking point and ran wide'});
   this.decisions.length=Math.min(45,this.decisions.length);
  }
  if(!c.pitState&&!neutral&&c.status==='RUNNING'&&c.wideUntil<this.time-2&&pace<80&&
-    this.random()<dt*(.0016+(c.decision==='Attack'?.0022:0)+(1-c.tyre)*.0026+(pressured?.0012:0)+this.weather*.004)
+    this.random()<dt*(.0016+(c.decision==='Attack'?.0022:0)+(1-c.tyre)*.0026+(pressured?.0012:0)+water*.007)
      *(1.7-c.steadiness)*(1+c.pressure*1.1))
   c.wideUntil=this.time+.55+this.random()*.5;
- c.ers=clamp(c.ers+((c.decision==='Attack'?-.010:c.decision==='Conserve'?.012:.004)+(c.brake>25?.006:0))*dt,0,1);c.tyre=clamp(c.tyre-dt*tyre.wear*(c.decision==='Attack'?1.3:c.decision==='Conserve'?.78:1)*(this.weather>.6&&c.compound!=='WET'?2.2:1),.02,1);c.fuel=Math.max(0,c.fuel-dt*this.burn);c.flow=c.throttle*.96;c.heart=105+c.speed*.75+c.aggression*8;c.plank=Math.max(8.5,c.plank-dt*.000025);c.dist+=c.speed*dt;
+ c.ers=clamp(c.ers+((c.decision==='Attack'?-.010:c.decision==='Conserve'?.012:.004)+(c.brake>25?.006:0))*dt,0,1);c.tyre=clamp(c.tyre-dt*tyre.wear*(c.decision==='Attack'?1.3:c.decision==='Conserve'?.78:1)*(water>.6&&c.compound!=='WET'?2.2:1),.02,1);c.fuel=Math.max(0,c.fuel-c.speed*dt*this.burn);c.flow=c.throttle*.96;c.heart=105+c.speed*.75+c.aggression*8;c.plank=Math.max(8.5,c.plank-dt*.000025);c.dist+=c.speed*dt;
  if(ahead&&!c.unlapTarget&&!c.returnTo&&!ahead.returnTo&&(neutral||c.restartAt))c.dist=Math.min(c.dist,ahead.dist-9);if(c.restartAt&&c.dist>=c.restartAt)c.restartAt=null;if(c.unlapTarget&&c.dist>=c.unlapTarget&&this.leader.dist-c.dist<85){c.unlapTarget=null;this.radio('DEPUTY DIRECTOR / MARSHAL LEAD',`Car ${c.id} has completed its authorised unlapping pass.`);}/* Sector and lap timing measured against the reference lap, so every delta
     on the map is what the car actually did rather than an estimate. */
  /* Only a step that actually moved the car forward can cross a timing line:
@@ -1744,7 +1901,7 @@ function radar(){
   wl.setAttribute('text-anchor','middle');wl.setAttribute('opacity','1');
   wl.textContent=`S3 WATER ${(w*14).toFixed(1)} mm`;}else wl.setAttribute('opacity','0');
  const sc=$('#rl-sc');
- if(sim.flag==='SC'&&sim.leader){const p=pointAt(sim.leader.dist+55,lerpArr(RACE,sim.leader.dist+55)*USABLE);
+ if(sim.sc.on){const p=pointAt(sim.sc.dist,lerpArr(RACE,sim.sc.dist)*USABLE);
   sc.setAttribute('opacity','1');sc.setAttribute('transform',`translate(${p.x.toFixed(1)},${p.y.toFixed(1)})`);}
  else sc.setAttribute('opacity','0');
  const lights=$('#rl-lights'),on=sim.phase==='GRID'||sim.phase==='LIGHTS';
@@ -1876,7 +2033,11 @@ function comms(){
 }
 function render(){const flagColor={GREEN:'#1F7A4D',YELLOW:'#8A7400',VSC:'#DD6E12',SC:'#DD6E12',RED:'#B5232B'};$('#phase').textContent=sim.phase.replaceAll('_',' ');$('#lap').textContent=`LAP ${String(Math.min(sim.lap,sim.totalLaps)).padStart(2,'0')} / ${sim.totalLaps}`;$('#clock').textContent=clock(sim.time);$('#flag').textContent=sim.phase==='FINISHED'?'FINISHED':sim.flag;$('#flag').style.color=flagColor[sim.flag];document.querySelectorAll('.flags button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.command===sim.flag));
  if(lastFlag!==sim.flag){lastFlag=sim.flag;sim.rcm('FLAG',{GREEN:'TRACK CLEAR - GREEN FLAG',YELLOW:'YELLOW FLAG - FULL COURSE',
-  VSC:'VIRTUAL SAFETY CAR DEPLOYED',SC:'SAFETY CAR DEPLOYED',RED:'RED FLAG - SESSION SUSPENDED'}[sim.flag]||sim.flag);}$('#play').textContent=sim.paused?'Run':'Pause';$('#circuit-line').textContent=`${CIRCUIT.name.toUpperCase()} · ${CIRCUIT.event}`;radar();timing();cornerView();pitView();telemetry();operations();comms();}
+  VSC:'VIRTUAL SAFETY CAR DEPLOYED',SC:'SAFETY CAR DEPLOYED',RED:'RED FLAG - SESSION SUSPENDED'}[sim.flag]||sim.flag);}$('#play').textContent=sim.paused?'Run':'Pause';$('#circuit-line').textContent=`${CIRCUIT.name.toUpperCase()} · ${CIRCUIT.event}`;
+ const w=sim.weather,rain=sim.wx.rain;
+ $('#water').textContent=(w<.05?'Dry':w<.2?'Damp':w<.45?'Wet':w<.7?'Very wet':'Flooded')
+  +(rain>.5?' · heavy rain':rain>.12?' · raining':w>.05&&sim.wx.lineDry>.2?' · line drying':'');
+ if(!$('#weather').matches(':active'))$('#weather').value=Math.round(w*100);radar();timing();cornerView();pitView();telemetry();operations();comms();}
 function toast(message){$('#toast').textContent=message;$('#toast').style.display='block';toastUntil=performance.now()+6500;}
 function modal(title,body){$('#modal-title').textContent=title;$('#modal-body').innerHTML=body;if(!$('#modal').open)$('#modal').showModal();}
 function review(id){const i=sim.incidents.find(x=>x.id===Number(id))??sim.incidents.find(x=>x.status==='REVIEW');if(!i)return toast('No incident is awaiting review.');const actions=i.status!=='REVIEW'?[]:i.type==='release'?[['penalty5','Confirm stewards 5-second decision']]:i.type==='wing'?[['wing','Refer for post-race inspection']]:i.type==='apex'?[['return','Order position return'],['penalty10','Confirm stewards 10-second decision']]:i.type==='grid'?[['grid','Verify repositioned Car 12']]:i.type==='impact'?[['SC','Deploy full Safety Car'],['medical','Dispatch Medical Car']]:i.type==='weather'?[['RED','Red-flag race']]:[];const done=i.answered||[];const offer=actions.filter(([a])=>!done.includes({SC:'neutralised',RED:'neutralised',medical:'medical'}[a]));
@@ -1929,7 +2090,18 @@ function results(){if(!sim.result)return toast('No classification has been gener
 document.addEventListener('click',e=>{const car=e.target.closest('[data-car]');if(car){selected=Number(car.dataset.car);$('#car-select').value=selected;render();}const tab=e.target.closest('[data-tab]');if(tab){$('.deck').dataset.view=tab.dataset.tab;document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b===tab));}const i=e.target.closest('[data-incident]');if(i)review(i.dataset.incident);const dismiss=e.target.closest('[data-dismiss]');if(dismiss){const r=sim.command('dismiss',dismiss.dataset.dismiss);toast(r.message);$('#modal').close();render();}const cmd=e.target.closest('[data-command]');if(cmd){const a=cmd.dataset.command;if(a==='review')review();else if(a==='results')results();else{const r=sim.command(a,16);toast(r.message);if(r.ok&&$('#modal').open)$('#modal').close();if(a==='finish'&&r.ok)results();render();}}if(e.target.id==='export-season')download('aegis-season.json',JSON.stringify(season,null,2),'application/json');
  if(e.target.id==='clear-season'){season={races:[]};saveSeason();championship();toast('Season cleared.');}
  if(e.target.id==='download-script')download('race-control-production-script.txt',scriptText());if(e.target.id==='download-results')download('race-control-results.json',JSON.stringify({result:sim.result,documents:sim.documents},null,2),'application/json');});
-$('#play').onclick=()=>{if(sim.phase==='FORMATION_READY')sim.command('formation');else sim.paused=!sim.paused;render();};$('#rate').onchange=e=>sim.rate=Number(e.target.value);$('#load').onclick=()=>{const rate=sim.rate;sim.checkpoint(Number($('#scenario').value));sim.rate=rate;replayLive=true;$('#replay').value=40;render();toast('Scenario checkpoint loaded and paused. Press Run when ready.');};$('#weather').oninput=e=>{sim.weather=Number(e.target.value)/100;render();};$('#projection').onclick=()=>{projection=!projection;radar();};$('#replay').oninput=()=>{replayLive=false;radar();};$('#live').onclick=()=>{replayLive=true;$('#replay').value=40;radar();};$('#script').onclick=()=>modal('Full production script · 5 scenarios',scriptBody());$('#help').onclick=()=>{modal('Operating guide',`<p>You supervise <b>12 autonomous utility-based game-AI drivers</b>. Their attack, defence, conservation and pit choices depend on traffic, tyre wear, energy and water. No API key or cloud model is required.</p><ol class="modal-guide"><li><b>Start:</b> Begin formation, verify Car 12, arm the lights, then open the pit exit once the field clears. Use Run/Pause and pace to control simulation time.</li><li><b>Supervise:</b> Select a car for comparative telemetry and decision scores. Open StewardAI evidence to confirm sporting decisions, order a position return or preserve technical findings.</li><li><b>Recover:</b> Full Safety Car → Medical Car → CMO clearance → barrier repair → circuit release → eligible unlapping → following lap → SC in this lap.</li><li><b>Weather:</b> Red flag → pit-lane queue → assess conditions. Lower the surface-water slider to explore a restart. No resumption reconstructs the countback snapshot and points.</li><li><b>Explore:</b> Load any of the five paused checkpoints, or run the full 50-lap race. Incidents are authored teaching events; the AI race order is computed live.</li></ol><h3>The circuit and the lap model</h3><p>The track is the <b>Jeddah Corniche Circuit</b>: 6.174 km, 27 corners, 50 laps. Its centreline is the surveyed trace from the open <i>f1-circuits</i> dataset, projected to metres, rotated to fit the panel and smoothed at about a 45 m scale, with corner radii floored at 55 m because the raw 40 m survey spacing otherwise turns real corners into polygon vertices.</p><p>Speed is not scripted. Grip splits into a mechanical term and a downforce term that grows with the square of speed, and engine power is balanced against drag, so every apex speed and every top speed falls out of the geometry. The envelope is calibrated against published figures for this circuit — Brembo's Turn 1 brake trace (325 to 116 km/h over 115 m at 4.5 g) and Turn 27 (319 to 113 km/h, 4.9 g). The reference lap that comes out is <b id="guide-ref">—</b> at <b id="guide-avg">—</b>, against a real pole of about 1:28 and Hamilton's 1:30.734 record; in race trim, with fuel and tyre wear, the cars run 1:31 to 1:34.</p><h3>Circuits</h3><p>Two tracks, switched from the toolbar. Each centreline is the surveyed trace from the open <i>f1-circuits</i> dataset, projected to metres, rotated to fit the panel and smoothed at about a 45 m scale, with corner radii floored at what the published apex speeds imply. Changing circuit rebuilds the geometry, the racing line and the speed profile, and starts a fresh race.</p>
+$('#play').onclick=()=>{if(sim.phase==='FORMATION_READY')sim.command('formation');else sim.paused=!sim.paused;render();};$('#rate').onchange=e=>sim.rate=Number(e.target.value);$('#load').onclick=()=>{const rate=sim.rate;sim.checkpoint(Number($('#scenario').value));sim.rate=rate;replayLive=true;$('#replay').value=40;render();toast('Scenario checkpoint loaded and paused. Press Run when ready.');};$('#weather').oninput=e=>{
+ /* Taking the slider means taking control of the sky. */
+ sim.liveWeather=false;sim.weather=Number(e.target.value)/100;
+ sim.wx.rain=sim.weather;sim.wx.target=sim.weather;sim.wx.at=600;
+ $('#wx-auto').setAttribute('aria-pressed','false');$('#wx-auto').textContent='Live weather · off';
+ render();};
+$('#wx-auto').onclick=()=>{
+ sim.liveWeather=!sim.liveWeather;
+ $('#wx-auto').setAttribute('aria-pressed',String(sim.liveWeather));
+ $('#wx-auto').textContent='Live weather · '+(sim.liveWeather?'on':'off');
+ toast(sim.liveWeather?'Weather is live again — the forecast will move on its own.':'Weather held at the slider setting.');
+};$('#projection').onclick=()=>{projection=!projection;radar();};$('#replay').oninput=()=>{replayLive=false;radar();};$('#live').onclick=()=>{replayLive=true;$('#replay').value=40;radar();};$('#script').onclick=()=>modal('Full production script · 5 scenarios',scriptBody());$('#help').onclick=()=>{modal('Operating guide',`<p>You supervise <b>12 autonomous utility-based game-AI drivers</b>. Their attack, defence, conservation and pit choices depend on traffic, tyre wear, energy and water. No API key or cloud model is required.</p><ol class="modal-guide"><li><b>Start:</b> Begin formation, verify Car 12, arm the lights, then open the pit exit once the field clears. Use Run/Pause and pace to control simulation time.</li><li><b>Supervise:</b> Select a car for comparative telemetry and decision scores. Open StewardAI evidence to confirm sporting decisions, order a position return or preserve technical findings.</li><li><b>Recover:</b> Full Safety Car → Medical Car → CMO clearance → barrier repair → circuit release → eligible unlapping → following lap → SC in this lap.</li><li><b>Weather:</b> Red flag → pit-lane queue → assess conditions. Lower the surface-water slider to explore a restart. No resumption reconstructs the countback snapshot and points.</li><li><b>Explore:</b> Load any of the five paused checkpoints, or run the full 50-lap race. Incidents are authored teaching events; the AI race order is computed live.</li></ol><h3>The circuit and the lap model</h3><p>The track is the <b>Jeddah Corniche Circuit</b>: 6.174 km, 27 corners, 50 laps. Its centreline is the surveyed trace from the open <i>f1-circuits</i> dataset, projected to metres, rotated to fit the panel and smoothed at about a 45 m scale, with corner radii floored at 55 m because the raw 40 m survey spacing otherwise turns real corners into polygon vertices.</p><p>Speed is not scripted. Grip splits into a mechanical term and a downforce term that grows with the square of speed, and engine power is balanced against drag, so every apex speed and every top speed falls out of the geometry. The envelope is calibrated against published figures for this circuit — Brembo's Turn 1 brake trace (325 to 116 km/h over 115 m at 4.5 g) and Turn 27 (319 to 113 km/h, 4.9 g). The reference lap that comes out is <b id="guide-ref">—</b> at <b id="guide-avg">—</b>, against a real pole of about 1:28 and Hamilton's 1:30.734 record; in race trim, with fuel and tyre wear, the cars run 1:31 to 1:34.</p><h3>Circuits</h3><p>Two tracks, switched from the toolbar. Each centreline is the surveyed trace from the open <i>f1-circuits</i> dataset, projected to metres, rotated to fit the panel and smoothed at about a 45 m scale, with corner radii floored at what the published apex speeds imply. Changing circuit rebuilds the geometry, the racing line and the speed profile, and starts a fresh race.</p>
 <ul class="modal-guide">
 <li><b>Jeddah Corniche</b> — 6.174 km, 27 corners, 50 laps, three DRS zones. Reference lap <b>1:28.4</b> at 251 km/h against a real pole near 1:28.3 and Hamilton's 1:30.734 record.</li>
 <li><b>Sao Paulo (Interlagos)</b> — 4.309 km, 71 laps. Reference lap 1:10.57 against Bottas's 1:10.540.</li>
@@ -1963,6 +2135,9 @@ $('#play').onclick=()=>{if(sim.phase==='FORMATION_READY')sim.command('formation'
 <h3>The FIA channel</h3><p>The <b>FIA</b> tab is your own transmitter. Choose a recipient — every driver, a team principal, or the whole field — and a call: a driving standards warning, a black-and-white flag, a note that an incident is under investigation, a five or ten second penalty, or a summons. What you send lands on the car: a warned driver backs off for two minutes, a car already carrying a black-and-white flag has its <i>next</i> offence escalate to a penalty on its own, and a time penalty is served at that car's next stop. Warnings, flags and investigations are marked against the car in the timing tower, and principals do not always take a penalty quietly.</p>
 <h3>Championship</h3><p>Every classified race is filed to a season kept in this browser: driver and constructor standings, points by round and the winner of each. It builds up as circuits are added, and can be exported as JSON or cleared from the standings screen.</p>
 <h3>Team radio</h3><p>The comms panel carries every team's pit wall and driver on their own channel, filterable by team, so what each of the twenty-two drivers is about to do is readable without opening a telemetry panel: the plan they were given, the lap they are called in, whether a stop is an undercut or a tyre that has gone, and what they found on the out lap.</p>
+<h3>Weather</h3><p>Rain arrives, builds and passes on its own — the forecast reaches the pit walls before it reaches the circuit. Standing water lags behind the rain, because a track takes time to flood and longer to drain, and running cars pump it off. When the rain stops the <b>racing line dries first</b>, so a car sitting on the line finds a road that a car running beside it does not, which is what makes overtaking in the wet the gamble it is.</p>
+<p>Each compound has its own curve against water: slicks fall off a cliff, inters peak in the middle and wets want it properly flooded. The crossovers land where they do in life — onto inters at about two tenths of water, onto wets past six — and the teams call them on merit, only moving when another tyre is clearly quicker on the water that is actually out there. The slider still works, and taking it hands you the sky; <b>Live weather</b> hands it back.</p>
+<h3>The Safety Car</h3><p>It is a car on the circuit now, not a speed limit. It picks up the leader, runs its own line at its own pace — slowing for the corners like anything else — and every car has a place in the queue and drives to it, closing at speed if it is a long way back. A twenty second lead becomes nothing: in testing a field spread over 2,150 m closed to a uniform 24 m queue. Withdrawing it sends it down the pit lane and hands the restart to the leader.</p>
 <h3>Contact</h3><p>Two cars fighting over the same piece of road sometimes end up in each other. It needs them genuinely overlapping, in a braking zone or a corner, and how likely it is depends on how committed the attacker is, how steady both drivers are and how much pressure they are carrying — so it happens where and to whom you would expect. A race produces two or three, which is about what a real one does.</p>
 <p>Fault is apportioned the way the guidelines read it: a defender who moved across into a car that was already alongside owns it, an attacker who was never alongside owns it instead. Most contact costs a front wing and a few seconds; some spins a car round; occasionally a car is left in the barrier, which opens a real impact note on the console naming the cars, the lap and the corner that were actually involved — and from there it is the Safety Car and the medical response, exactly as the scripted one behaves. Nothing about it is authored.</p>
 <h3>Fuel</h3><p>A car starts the race about three seconds a lap slower than it finishes it, because it is carrying a hundred kilos it will have burned by the end. Lap times fall through every stint, and the fastest lap of the race tends to come late on a light car — which is where they come in life.</p>
