@@ -7,6 +7,20 @@
 color-scheme:light;font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;font-size:15px}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+.viewset{display:inline-flex;gap:3px;margin-right:8px}
+.viewset button{padding:3px 7px;font-size:.625rem;letter-spacing:.08em}
+.viewset button.on{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.stage{position:relative;background:#05070c;line-height:0}
+.stage canvas{width:100%;display:block;image-rendering:auto}
+.stage-hud{position:absolute;left:10px;top:9px;display:flex;flex-direction:column;gap:2px;
+ font:600 .6875rem/1.45 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#EDEBE3;
+ text-shadow:0 1px 3px #000;pointer-events:none}
+.stage-hud #hud-speed{font-size:1.5rem;letter-spacing:.02em}
+.stage-hud #hud-driver{color:#9C9A90}
+.stage-bars{position:absolute;right:12px;bottom:12px;display:flex;gap:5px;align-items:flex-end;height:78px;pointer-events:none}
+.stage-bars i{width:9px;background:#2A2F38;border-radius:2px;align-self:flex-end;display:block}
+#hud-thr{box-shadow:inset 0 0 0 99px #1F7A4D}
+#hud-brk{box-shadow:inset 0 0 0 99px #B5232B}
 .warn.mad{background:#B5232B;color:#fff;border-color:#B5232B}
 #pressure-line i.mood{background:linear-gradient(90deg,#DD6E12,#B5232B)}
 .weekend{border:1px solid var(--rule);border-radius:3px;padding:8px 9px;margin-bottom:10px;background:var(--paper-3)}
@@ -355,7 +369,7 @@ dialog{width:calc(100% - 16px);max-height:94dvh}
 <nav class="flags" aria-label="Race flags"><span>Track signal</span><button data-command="GREEN" class="green">Green</button><button data-command="YELLOW" class="yellow">Yellow</button><button data-command="VSC">VSC</button><button data-command="SC" class="amber">Safety car</button><button data-command="RED" class="red">Red</button></nav>
 <main class="deck" data-view="track">
 <section class="panel tower" data-mobile="track"><div class="panel-head"><h2>Timing</h2><span>LIVE</span></div><div class="tower-head"><span>POS / CAR</span><span>INTERVAL</span></div><div id="timing"></div><div class="tower-foot" id="tower-note"><span>Click a car to inspect its decisions.</span></div></section>
-<section class="panel track" data-mobile="track"><div class="panel-head"><h2>Circuit</h2><div><button id="projection" class="small">2D / 3D</button><span class="live">LIVE POSITION</span></div></div><div id="radar" class="radar"></div><div class="map-footer"><span id="selected-sector">SECTOR MICRO-DELTAS</span><label>Replay <input id="replay" type="range" min="0" max="159" value="159" aria-label="Radar replay, latest at right"></label><button id="live" class="small">Live</button></div></section>
+<section class="panel track" data-mobile="track"><div class="panel-head"><h2>Circuit</h2><div><span class="viewset" id="viewset"><button class="small on" data-view="plan">Plan</button><button class="small" data-view="chase">Chase</button><button class="small" data-view="onboard">Onboard</button><button class="small" data-view="corner">Corner</button></span><span class="live">LIVE POSITION</span></div></div><div id="radar" class="radar"></div><div id="stage" class="stage" hidden><canvas id="scene"></canvas><div class="stage-hud"><span id="hud-driver">—</span><span id="hud-speed">0</span><span id="hud-gear">N</span><span id="hud-gap">—</span><span id="hud-corner">—</span></div><div class="stage-bars"><i id="hud-thr"></i><i id="hud-brk"></i></div></div><div class="map-footer"><span id="selected-sector">SECTOR MICRO-DELTAS</span><label>Replay <input id="replay" type="range" min="0" max="159" value="159" aria-label="Radar replay, latest at right"></label><button id="live" class="small">Live</button></div></section>
 <section class="cameras" data-mobile="track"><div class="panel"><div class="panel-head"><h2>Corner cam</h2><span id="corner-meta">—</span></div><div id="corner" class="camera"></div></div><div class="panel"><div class="panel-head"><h2>Pit lane</h2><span id="pit-light">EXIT RED</span></div><div id="pitcam" class="camera"></div></div></section>
 <section class="panel control" data-mobile="control"><div class="panel-head"><h2>Console</h2><span>HUMAN AUTHORITY</span></div><div class="weekend"><span id="wk-label">GRAND PRIX WEEKEND</span><div class="wk-strip" id="wk-strip"></div><p class="wk-note" id="wk-note"></p><button id="run-session" class="small wide">Run next session</button></div><div class="next"><span>NEXT OPERATION</span><h3 id="next-title">Begin formation</h3><p id="next-copy">The field is ready. Car 41 will start from the pit lane.</p><button id="next" class="primary wide" data-command="formation">Begin formation lap</button></div><details><summary>Start &amp; pit protocol</summary><div class="button-grid"><button data-command="grid" id="verify-btn">Verify grid</button><button data-command="lights">Arm grid lights</button><button data-command="pit">Pit exit green</button></div></details><details><summary>Recovery &amp; Safety Car</summary><div class="button-grid"><button data-command="medical">Dispatch medical</button><button data-command="repair">Authorise repair</button><button data-command="unlap">Unlap eligible cars</button><button data-command="scin">SC in this lap</button></div><p class="status-line" id="recovery-state">Medical cover available · circuit clear</p></details><details><summary>Weather &amp; resumption</summary><label class="weather-control">Surface water <input id="weather" type="range" min="0" max="100" value="0"><span id="water">Dry</span></label><button id="wx-auto" class="small wide" aria-pressed="true">Live weather · on</button><div class="button-grid"><button data-command="standing">Standing restart</button><button data-command="rolling">Rolling restart</button><button data-command="finish">No resumption / results</button></div></details><div class="panel-head inset"><h2>StewardAI</h2><span>PRE-SCREEN ONLY</span></div><div id="incidents"></div><button class="wide ledger" id="documents">Documents <span id="document-count">0</span></button><button class="wide ledger" id="qualifying">Starting grid</button><button class="wide ledger" id="championship">Championship <span id="race-count">0</span></button></section>
 <section class="panel telemetry" data-mobile="telemetry"><div class="panel-head"><h2>Telemetry</h2><div class="selectors"><label>Car <select id="car-select"></select></label><label>Compare <select id="compare-select"></select></label></div></div><div class="telemetry-layout"><div><div class="metrics" id="metrics"></div><div class="traces" id="traces"></div></div><div class="data-column"><h3>Biometric & impact</h3><div id="medical"></div><h3>Tyres &amp; strategy</h3><div id="technical"></div></div></div><div class="decision-card"><span>AUTONOMOUS DRIVER POLICY</span><h3 id="decision-title">Holding formation</h3><p id="decision-reason">Awaiting the director's signal.</p><div class="pressure" id="pressure-line"></div><div id="utilities"></div></div></section>
@@ -2696,6 +2710,7 @@ function radarCars(){
 }
 /* Called at panel rate - the parts that do not move every frame. */
 function radar(){
+ if(view3!=='plan')return;
  if(!radarBuilt)buildRadar();
  const snap=replayLive?null:sim.replay[Math.min(Number($('#replay').value),sim.replay.length-1)];
  $('#rl-flag').textContent=`${snap?.flag??sim.flag} · ${snap?'REPLAY':'LIVE'}`;
@@ -2997,7 +3012,8 @@ $('#wx-auto').onclick=()=>{
  $('#wx-auto').setAttribute('aria-pressed',String(sim.liveWeather));
  $('#wx-auto').textContent='Live weather · '+(sim.liveWeather?'on':'off');
  toast(sim.liveWeather?'Weather is live again — the forecast will move on its own.':'Weather held at the slider setting.');
-};$('#projection').onclick=()=>{projection=!projection;radar();};$('#replay').oninput=()=>{replayLive=false;radar();};$('#live').onclick=()=>{replayLive=true;$('#replay').value=159;radar();};$('#script').onclick=()=>modal('Full production script · 5 scenarios',scriptBody());$('#help').onclick=()=>{modal('Operating guide',`<p>You supervise <b>12 autonomous utility-based game-AI drivers</b>. Their attack, defence, conservation and pit choices depend on traffic, tyre wear, energy and water. No API key or cloud model is required.</p><ol class="modal-guide"><li><b>Start:</b> Begin formation, verify Car 12, arm the lights, then open the pit exit once the field clears. Use Run/Pause and pace to control simulation time.</li><li><b>Supervise:</b> Select a car for comparative telemetry and decision scores. Open StewardAI evidence to confirm sporting decisions, order a position return or preserve technical findings.</li><li><b>Recover:</b> Full Safety Car → Medical Car → CMO clearance → barrier repair → circuit release → eligible unlapping → following lap → SC in this lap.</li><li><b>Weather:</b> Red flag → pit-lane queue → assess conditions. Lower the surface-water slider to explore a restart. No resumption reconstructs the countback snapshot and points.</li><li><b>Explore:</b> Load any of the five paused checkpoints, or run the full 50-lap race. Incidents are authored teaching events; the AI race order is computed live.</li></ol><h3>The circuit and the lap model</h3><p>The track is the <b>Jeddah Corniche Circuit</b>: 6.174 km, 27 corners, 50 laps. Its centreline is the surveyed trace from the open <i>f1-circuits</i> dataset, projected to metres, rotated to fit the panel and smoothed at about a 45 m scale, with corner radii floored at 55 m because the raw 40 m survey spacing otherwise turns real corners into polygon vertices.</p><p>Speed is not scripted. Grip splits into a mechanical term and a downforce term that grows with the square of speed, and engine power is balanced against drag, so every apex speed and every top speed falls out of the geometry. The envelope is calibrated against published figures for this circuit — Brembo's Turn 1 brake trace (325 to 116 km/h over 115 m at 4.5 g) and Turn 27 (319 to 113 km/h, 4.9 g). The reference lap that comes out is <b id="guide-ref">—</b> at <b id="guide-avg">—</b>, against a real pole of about 1:28 and Hamilton's 1:30.734 record; in race trim, with fuel and tyre wear, the cars run 1:31 to 1:34.</p><h3>Circuits</h3><p>The whole 2026 calendar, twenty-four rounds, in their running order, switched from the toolbar. Each centreline is the surveyed trace from the open <i>f1-circuits</i> dataset, projected to metres, rotated to fit the panel and smoothed at about a 45 m scale, with corner radii floored at what the published apex speeds imply. Changing circuit rebuilds the geometry, the racing line and the speed profile, and starts a fresh race.</p>
+};$('#viewset').onclick=e=>{const b=e.target.closest('[data-view]');if(b)setView(b.dataset.view);};
+window.addEventListener('resize',()=>{if(view3!=='plan')drawStage();});$('#replay').oninput=()=>{replayLive=false;radar();};$('#live').onclick=()=>{replayLive=true;$('#replay').value=159;radar();};$('#script').onclick=()=>modal('Full production script · 5 scenarios',scriptBody());$('#help').onclick=()=>{modal('Operating guide',`<p>You supervise <b>12 autonomous utility-based game-AI drivers</b>. Their attack, defence, conservation and pit choices depend on traffic, tyre wear, energy and water. No API key or cloud model is required.</p><ol class="modal-guide"><li><b>Start:</b> Begin formation, verify Car 12, arm the lights, then open the pit exit once the field clears. Use Run/Pause and pace to control simulation time.</li><li><b>Supervise:</b> Select a car for comparative telemetry and decision scores. Open StewardAI evidence to confirm sporting decisions, order a position return or preserve technical findings.</li><li><b>Recover:</b> Full Safety Car → Medical Car → CMO clearance → barrier repair → circuit release → eligible unlapping → following lap → SC in this lap.</li><li><b>Weather:</b> Red flag → pit-lane queue → assess conditions. Lower the surface-water slider to explore a restart. No resumption reconstructs the countback snapshot and points.</li><li><b>Explore:</b> Load any of the five paused checkpoints, or run the full 50-lap race. Incidents are authored teaching events; the AI race order is computed live.</li></ol><h3>The circuit and the lap model</h3><p>The track is the <b>Jeddah Corniche Circuit</b>: 6.174 km, 27 corners, 50 laps. Its centreline is the surveyed trace from the open <i>f1-circuits</i> dataset, projected to metres, rotated to fit the panel and smoothed at about a 45 m scale, with corner radii floored at 55 m because the raw 40 m survey spacing otherwise turns real corners into polygon vertices.</p><p>Speed is not scripted. Grip splits into a mechanical term and a downforce term that grows with the square of speed, and engine power is balanced against drag, so every apex speed and every top speed falls out of the geometry. The envelope is calibrated against published figures for this circuit — Brembo's Turn 1 brake trace (325 to 116 km/h over 115 m at 4.5 g) and Turn 27 (319 to 113 km/h, 4.9 g). The reference lap that comes out is <b id="guide-ref">—</b> at <b id="guide-avg">—</b>, against a real pole of about 1:28 and Hamilton's 1:30.734 record; in race trim, with fuel and tyre wear, the cars run 1:31 to 1:34.</p><h3>Circuits</h3><p>The whole 2026 calendar, twenty-four rounds, in their running order, switched from the toolbar. Each centreline is the surveyed trace from the open <i>f1-circuits</i> dataset, projected to metres, rotated to fit the panel and smoothed at about a 45 m scale, with corner radii floored at what the published apex speeds imply. Changing circuit rebuilds the geometry, the racing line and the speed profile, and starts a fresh race.</p>
 <p>The cornering limit that comes out of a forty-metre survey has ripple in it: a single corner arrives as a run of notches a couple of car lengths apart rather than one radius. Left alone, cars brake, release and brake again through one corner. The limit is therefore averaged over about six metres before it is made feasible, with no point allowed more than fourteen per cent above the tightest limit near it, so an apex stays an apex. Every circuit's radius floor and curvature stencil is then fitted against two things at once &mdash; the real lap record and the real speed of its slowest corner &mdash; which lands the whole calendar at 0.7 per cent mean error, 2.2 per cent at worst.</p>
 <ul class="modal-guide">
 <li><b>Jeddah Corniche</b> — 6.174 km, 27 corners, 50 laps, three DRS zones. Reference lap <b>1:28.4</b> at 251 km/h against a real pole near 1:28.3 and Hamilton's 1:30.734 record.</li>
@@ -3107,7 +3123,7 @@ $('#fia-text').addEventListener('keydown',e=>{if(e.key==='Enter')$('#fia-send').
    profile, then starts a fresh race on the new track. */
 $('#circuit').onchange=e=>{
  buildCircuit(e.target.value);
- radarBuilt=false;carNodes.clear();
+ radarBuilt=false;carNodes.clear();W3=null;W3key=null;camPrev=null;
  sim=new RaceEngine();
  selected=16;compare=55;replayLive=true;$('#replay').value=159;
  $('#scenario').value='1';
@@ -3125,13 +3141,376 @@ function frame(now){
   while(acc>=PHYS&&steps<budget){sim.step(PHYS);acc-=PHYS;steps++;}
   if(acc>PHYS*2)acc=PHYS*2;
  }else acc=0;
- radarCars();
+ if(view3==='plan')radarCars();else drawStage();
  if(now-lastRender>110){render();lastRender=now;}
  if(toastUntil&&now>toastUntil){$('#toast').style.display='none';toastUntil=0;}
  requestAnimationFrame(frame);
 }
 /* A read-only handle on the model, so the lap physics can be checked from the
    console against the published reference numbers. */
+
+/* ===========================================================================
+   THE 3D STAGE
+   A real perspective view of the circuit, not a tilted plan. The road is the
+   same surveyed centreline the rest of the simulator uses, in metres, with a
+   thirteen-metre carriageway, white lines, kerbs where the curvature says
+   there is a corner, and the cars where they actually are.
+
+   Elevation is the one thing the survey does not carry - the dataset is a
+   plan trace - so the road is flat and the corners are banked in proportion
+   to their radius, which is true of most of them. Nothing here is invented
+   terrain.
+=========================================================================== */
+const HALFW=6.6, KERBW=1.5, LAT3D=0.94;      /* metres */
+let W3=null,W3key=null;
+function build3D(){
+ const n=NS,pts=new Array(n);
+ for(let i=0;i<n;i++){
+  const tx=txs[i],ty=tys[i];
+  pts[i]={x:cxs[i]*MPP,y:cys[i]*MPP,tx,ty,nx:-ty,ny:tx,
+          k:kcen[i]/MPP,bank:clamp(Math.abs(kcen[i]/MPP)*260,0,.075)};
+ }
+ W3={pts,seg:LENGTH/n,key:CIRCUIT.key};W3key=CIRCUIT.key;
+}
+/* A point on the road surface, in world metres. lat is in the same units the
+   cars carry, so a car's line puts it exactly where the plan view has it. */
+function w3(dist,lat){
+ const s=posOf(dist),i0=Math.floor(s)%NS,i1=(i0+1)%NS,f=s-Math.floor(s);
+ const a=W3.pts[i0],b=W3.pts[i1];
+ const x=a.x+(b.x-a.x)*f, y=a.y+(b.y-a.y)*f;
+ let tx=a.tx+(b.tx-a.tx)*f, ty=a.ty+(b.ty-a.ty)*f;
+ const L=Math.hypot(tx,ty)||1;tx/=L;ty/=L;
+ const nx=-ty,ny=tx,m=lat*LAT3D;
+ const bank=a.bank+(b.bank-a.bank)*f, k=a.k+(b.k-a.k)*f;
+ /* Banking lifts the outside of the corner. */
+ const z=Math.abs(m)*bank*(Math.sign(m)===-Math.sign(k)?1:.25);
+ return{x:x+nx*m,y:y+ny*m,z,tx,ty,nx,ny,bank,k};
+}
+const cam={x:0,y:0,z:3,fx:1,fy:0,fz:0,ux:0,uy:0,uz:1,rx:0,ry:0,rz:0,ready:false};
+function aimCam(ex,ey,ez,tx,ty,tz,roll){
+ let fx=tx-ex,fy=ty-ey,fz=tz-ez;
+ const fl=Math.hypot(fx,fy,fz)||1;fx/=fl;fy/=fl;fz/=fl;
+ /* right = forward x worldUp, up = right x forward */
+ let rx=fy*1-fz*0, ry=fz*0-fx*1, rz=fx*0-fy*0;
+ rx=fy;ry=-fx;rz=0;
+ const rl=Math.hypot(rx,ry,rz)||1;rx/=rl;ry/=rl;rz/=rl;
+ let ux=ry*fz-rz*fy, uy=rz*fx-rx*fz, uz=rx*fy-ry*fx;
+ if(roll){const c=Math.cos(roll),s2=Math.sin(roll);
+  const nrx=rx*c+ux*s2,nry=ry*c+uy*s2,nrz=rz*c+uz*s2;
+  ux=ux*c-rx*s2;uy=uy*c-ry*s2;uz=uz*c-rz*s2;rx=nrx;ry=nry;rz=nrz;}
+ cam.x=ex;cam.y=ey;cam.z=ez;cam.fx=fx;cam.fy=fy;cam.fz=fz;
+ cam.rx=rx;cam.ry=ry;cam.rz=rz;cam.ux=ux;cam.uy=uy;cam.uz=uz;
+}
+let VW3=800,VH3=450,FOCAL=700;
+function proj(x,y,z){
+ const dx=x-cam.x,dy=y-cam.y,dz=z-cam.z;
+ const d=dx*cam.fx+dy*cam.fy+dz*cam.fz;
+ if(d<.35)return null;
+ const r=dx*cam.rx+dy*cam.ry+dz*cam.rz;
+ const u=dx*cam.ux+dy*cam.uy+dz*cam.uz;
+ const s=FOCAL/d;
+ return{x:VW3/2+r*s,y:VH3/2-u*s,d};
+}
+/* A quad only reaches the screen if enough of it is in front of the lens; a
+   near-plane clip on each edge keeps a corner behind the camera from folding
+   the polygon inside out. */
+function quad(ctx,a,b,c,d,fill){
+ const P=[a,b,c,d].map(p=>proj(p[0],p[1],p[2]));
+ if(P.some(q=>!q)){
+  const pts=[a,b,c,d],out=[];
+  for(let i=0;i<4;i++){
+   const p0=pts[i],p1=pts[(i+1)%4];
+   const d0=(p0[0]-cam.x)*cam.fx+(p0[1]-cam.y)*cam.fy+(p0[2]-cam.z)*cam.fz;
+   const d1=(p1[0]-cam.x)*cam.fx+(p1[1]-cam.y)*cam.fy+(p1[2]-cam.z)*cam.fz;
+   if(d0>=.4)out.push(p0);
+   if((d0>=.4)!==(d1>=.4)){
+    const t=(.4-d0)/(d1-d0);
+    out.push([p0[0]+(p1[0]-p0[0])*t,p0[1]+(p1[1]-p0[1])*t,p0[2]+(p1[2]-p0[2])*t]);
+   }
+  }
+  if(out.length<3)return;
+  const Q=out.map(p=>proj(p[0],p[1],p[2])).filter(Boolean);
+  if(Q.length<3)return;
+  ctx.beginPath();ctx.moveTo(Q[0].x,Q[0].y);
+  for(let i=1;i<Q.length;i++)ctx.lineTo(Q[i].x,Q[i].y);
+  ctx.closePath();ctx.fillStyle=fill;ctx.fill();return;
+ }
+ ctx.beginPath();ctx.moveTo(P[0].x,P[0].y);
+ for(let i=1;i<4;i++)ctx.lineTo(P[i].x,P[i].y);
+ ctx.closePath();ctx.fillStyle=fill;ctx.fill();
+}
+
+
+/* --------------------------------- SCENE --------------------------------- */
+let view3='plan',camPrev=null,stageCtx=null,cornerCam=null;
+function stageSize(){
+ const el=$('#scene'),host=$('#stage');
+ if(!el||!host)return false;
+ const w=Math.max(320,host.clientWidth||host.getBoundingClientRect().width||800);
+ const h=Math.round(w*(w<560?.62:.50));
+ const dpr=Math.min(2,window.devicePixelRatio||1);
+ if(el.width!==Math.round(w*dpr)||el.height!==Math.round(h*dpr)){
+  el.width=Math.round(w*dpr);el.height=Math.round(h*dpr);
+  el.style.height=h+'px';
+ }
+ VW3=w;VH3=h;FOCAL=(w/2)/Math.tan((view3==='onboard'?58:50)*Math.PI/360);
+ stageCtx=el.getContext('2d');
+ stageCtx.setTransform(dpr,0,0,dpr,0,0);
+ return true;
+}
+function skyline(ctx){
+ const hz=VH3/2 - (cam.uz>0? 0:0);
+ const g=ctx.createLinearGradient(0,0,0,VH3);
+ g.addColorStop(0,'#0a1020');g.addColorStop(.42,'#1b2740');g.addColorStop(.55,'#3a4a63');
+ g.addColorStop(.56,'#171a1f');g.addColorStop(1,'#0b0d12');
+ ctx.fillStyle=g;ctx.fillRect(0,0,VW3,VH3);
+}
+/* The ground is real geometry on z=0, not a fill to the middle of the frame:
+   that is what puts the horizon where the camera is actually looking. */
+function groundPlane(ctx){
+ const wet=sim.weather;
+ const col=wet>.2?'#1d2329':'#212a20';
+ const R=2600;
+ for(let k=0;k<8;k++){
+  const a0=k/8*TAU,a1=(k+1)/8*TAU;
+  const p0=[cam.x+Math.cos(a0)*R,cam.y+Math.sin(a0)*R,0];
+  const p1=[cam.x+Math.cos(a1)*R,cam.y+Math.sin(a1)*R,0];
+  quad(ctx,[cam.x,cam.y,0],p0,p1,[cam.x,cam.y,0],col);
+ }
+}
+/* Distance haze, so the road goes away instead of stopping. */
+function haze(ctx){
+ const hz=proj(cam.x+cam.fx*2200,cam.y+cam.fy*2200,0);
+ const y=hz?clamp(hz.y,0,VH3):VH3*.5;
+ const g=ctx.createLinearGradient(0,y-VH3*.18,0,y+VH3*.10);
+ const wet=sim.weather;
+ g.addColorStop(0,wet>.3?'rgba(60,70,84,0)':'rgba(40,52,72,0)');
+ g.addColorStop(1,wet>.3?'rgba(60,70,84,.85)':'rgba(40,52,72,.75)');
+ ctx.fillStyle=g;ctx.fillRect(0,Math.max(0,y-VH3*.18),VW3,VH3*.30);
+}
+function trackAhead(ctx,dist0){
+ const seg=W3.seg, wet=sim.weather, dry=sim.wx.lineDry;
+ const back=Math.round(95/seg), ahead=Math.round(760/seg);
+ const rows=[];
+ for(let k=-back;k<=ahead;k++){
+  const step=k<40?1:k<90?2:4;
+  if(k>0&&k%step)continue;
+  rows.push(k);
+ }
+ /* far to near */
+ for(let ri=rows.length-1;ri>0;ri--){
+  const k1=rows[ri],k0=rows[ri-1];
+  const d0=dist0+k0*seg,d1=dist0+k1*seg;
+  const a0=w3(d0,0),a1=w3(d1,0);
+  const e=HALFW;
+  const L0=[a0.x+a0.nx*e,a0.y+a0.ny*e,a0.z],R0=[a0.x-a0.nx*e,a0.y-a0.ny*e,a0.z];
+  const L1=[a1.x+a1.nx*e,a1.y+a1.ny*e,a1.z],R1=[a1.x-a1.nx*e,a1.y-a1.ny*e,a1.z];
+  const fade=Math.min(1,Math.max(0,1-(k1*seg)/900));
+  const base=wet>.15?[52,60,68]:[62,65,70];
+  const shade=Math.round(18+fade*10);
+  quad(ctx,L0,L1,R1,R0,`rgb(${base[0]-shade+10},${base[1]-shade+10},${base[2]-shade+12})`);
+  /* the dry line comes back on the racing line first */
+  if(wet>.1&&dry>.05){
+   const rl0=lerpArr(RACE,d0)*USABLE*LAT3D,rl1=lerpArr(RACE,d1)*USABLE*LAT3D;
+   const wq=1.9;
+   quad(ctx,[a0.x+a0.nx*(rl0+wq),a0.y+a0.ny*(rl0+wq),a0.z],
+            [a1.x+a1.nx*(rl1+wq),a1.y+a1.ny*(rl1+wq),a1.z],
+            [a1.x+a1.nx*(rl1-wq),a1.y+a1.ny*(rl1-wq),a1.z],
+            [a0.x+a0.nx*(rl0-wq),a0.y+a0.ny*(rl0-wq),a0.z],
+            `rgba(46,49,54,${(dry*Math.min(1,wet*3)).toFixed(2)})`);
+  }
+  /* white lines */
+  const lw=.14;
+  for(const sgn of[1,-1]){
+   const o=e-lw;
+   quad(ctx,[a0.x+a0.nx*o*sgn,a0.y+a0.ny*o*sgn,a0.z+.005],
+            [a1.x+a1.nx*o*sgn,a1.y+a1.ny*o*sgn,a1.z+.005],
+            [a1.x+a1.nx*(o-lw*2)*sgn,a1.y+a1.ny*(o-lw*2)*sgn,a1.z+.005],
+            [a0.x+a0.nx*(o-lw*2)*sgn,a0.y+a0.ny*(o-lw*2)*sgn,a0.z+.005],
+            `rgba(236,236,232,${(.55+fade*.4).toFixed(2)})`);
+  }
+  /* kerbs on the inside of anything that is actually a corner */
+  const kk=(a0.k+a1.k)/2;
+  if(Math.abs(kk)>1/260){
+   const stripe=Math.floor(d0/4.6)%2===0;
+   const inner=kk>0?-1:1;
+   for(const sgn of[1,-1]){
+    const w=sgn===inner?KERBW:KERBW*.72;
+    quad(ctx,[a0.x+a0.nx*e*sgn,a0.y+a0.ny*e*sgn,a0.z],
+             [a1.x+a1.nx*e*sgn,a1.y+a1.ny*e*sgn,a1.z],
+             [a1.x+a1.nx*(e+w)*sgn,a1.y+a1.ny*(e+w)*sgn,a1.z+.07],
+             [a0.x+a0.nx*(e+w)*sgn,a0.y+a0.ny*(e+w)*sgn,a0.z+.07],
+             stripe?'#b8353c':'#e6e4dc');
+   }
+  }
+ }
+ /* start / finish, sector lines and the DRS zones, painted on the road */
+ const marks=[[0,'#ffffff',.9],[SECTORS[1],'#6f747d',.45],[SECTORS[2],'#6f747d',.45]];
+ for(const [f,col,w] of marks){
+  const d=f*LENGTH;
+  let rel=((d-dist0)%LENGTH+LENGTH)%LENGTH;
+  if(rel>760)continue;
+  const a=w3(dist0+rel,0);
+  quad(ctx,[a.x+a.nx*HALFW,a.y+a.ny*HALFW,a.z+.01],
+           [a.x+a.nx*HALFW+a.tx*w,a.y+a.ny*HALFW+a.ty*w,a.z+.01],
+           [a.x-a.nx*HALFW+a.tx*w,a.y-a.ny*HALFW+a.ty*w,a.z+.01],
+           [a.x-a.nx*HALFW,a.y-a.ny*HALFW,a.z+.01],col);
+ }
+ for(const z of DRSZONES){
+  for(const [f,col] of [[z.det,'#DD6E12'],[z.from,'#1F7A4D']]){
+   const d=f*LENGTH;
+   let rel=((d-dist0)%LENGTH+LENGTH)%LENGTH;
+   if(rel>760)continue;
+   const a=w3(dist0+rel,0);
+   for(const sgn of[1,-1]){
+    const o=HALFW+.5;
+    quad(ctx,[a.x+a.nx*o*sgn,a.y+a.ny*o*sgn,a.z],
+             [a.x+a.nx*o*sgn+a.tx*.6,a.y+a.ny*o*sgn+a.ty*.6,a.z],
+             [a.x+a.nx*o*sgn+a.tx*.6,a.y+a.ny*o*sgn+a.ty*.6,a.z+1.5],
+             [a.x+a.nx*o*sgn,a.y+a.ny*o*sgn,a.z+1.5],col);
+   }
+  }
+ }
+}
+function drawCar(ctx,c,dist0){
+ let rel=c.dist-dist0;
+ /* Only cars on the piece of road that is actually drawn, or they hang in
+    the middle of a field on a different part of the circuit. */
+ if(rel<-LENGTH/2)rel+=LENGTH; if(rel>LENGTH/2)rel-=LENGTH;
+ if(rel<-88||rel>750)return;
+ const a=w3(c.dist,c.lane??0);
+ const fx=a.tx,fy=a.ty,nx=a.nx,ny=a.ny;
+ const cx=a.x,cy=a.y,cz=a.z+.02;
+ const P=(l,w,h)=>[cx+fx*l+nx*w,cy+fy*l+ny*w,cz+h];
+ const shade=c.status==='RETIRED'?.42:1;
+ const col=c.colour||'#ccc';
+ const dim=(hex,f)=>{const n=parseInt(hex.slice(1),16);
+  return `rgb(${Math.round((n>>16&255)*f)},${Math.round((n>>8&255)*f)},${Math.round((n&255)*f)})`;};
+ /* A box, given its extent along the car, across it and up. */
+ const box=(l0,l1,w,h0,h1,c1,c2,c3)=>[
+  {p:[P(l1,-w,h1),P(l1,w,h1),P(l0,w,h1),P(l0,-w,h1)],c:c1},
+  {p:[P(l1,w,h1),P(l1,w,h0),P(l0,w,h0),P(l0,w,h1)],c:c2},
+  {p:[P(l1,-w,h1),P(l1,-w,h0),P(l0,-w,h0),P(l0,-w,h1)],c:c2},
+  {p:[P(l1,-w,h1),P(l1,w,h1),P(l1,w,h0),P(l1,-w,h0)],c:c3},
+  {p:[P(l0,-w,h1),P(l0,w,h1),P(l0,w,h0),P(l0,-w,h0)],c:c3}];
+ const body=dim(col,.92*shade),side=dim(col,.58*shade),cap=dim(col,.74*shade);
+ const faces=[
+  ...box(-2.55,2.30,.92,.06,.30,body,side,cap),          /* floor and sidepods */
+  ...box(-1.70,.55,.42,.30,.66,dim(col,.99*shade),dim(col,.66*shade),'#14161c'), /* cover */
+  ...box(-2.42,-2.16,.86,.62,.95,dim(col,.85*shade),'#1b1d22','#1b1d22'),        /* rear wing */
+  ...box(2.30,2.62,.90,.03,.12,dim(col,.8*shade),'#1b1d22','#1b1d22')];          /* front wing */
+ faces.sort((u,v)=>{
+  const m=q=>q.p.reduce((s2,z)=>s2+(z[0]-cam.x)*cam.fx+(z[1]-cam.y)*cam.fy+(z[2]-cam.z)*cam.fz,0);
+  return m(v)-m(u);});
+ for(const f of faces)quad(ctx,f.p[0],f.p[1],f.p[2],f.p[3],f.c);
+ const head=proj(cx,cy,cz+1.5);
+ if(head&&head.d<260){
+  const sz=Math.max(7,Math.min(16,240/head.d));
+  ctx.font=`700 ${sz.toFixed(0)}px 'IBM Plex Mono',monospace`;
+  ctx.textAlign='center';
+  ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillText(String(c.id),head.x+1,head.y+1);
+  ctx.fillStyle=col;ctx.fillText(String(c.id),head.x,head.y);
+  if(head.d<110){
+   ctx.font=`600 ${(sz*.6).toFixed(0)}px 'IBM Plex Sans',sans-serif`;
+   ctx.fillStyle='rgba(237,235,227,.8)';ctx.fillText(c.code||c.name,head.x,head.y+sz*.92);
+  }
+ }
+ if(sim.weather>.25&&c.status!=='RETIRED'){
+  const t=proj(cx-fx*2.5,cy-fy*2.5,cz+.5);
+  if(t&&t.d<220){ctx.fillStyle='rgba(226,44,54,.9)';ctx.beginPath();
+   ctx.arc(t.x,t.y,Math.max(1.3,52/t.d),0,TAU);ctx.fill();}
+ }
+}
+
+/* -------------------------------- CAMERAS -------------------------------- */
+function placeCam(c){
+ const a=w3(c.dist,c.lane??0);
+ const lead=w3(c.dist+24,(c.lane??0)*.9);
+ if(view3==='onboard'){
+  const eye=[a.x+a.tx*.9,a.y+a.ty*.9,a.z+1.08];
+  const look=[lead.x,lead.y,lead.z+.75];
+  const roll=clamp(-(c.latV||0)*.045,-.09,.09);
+  smoothCam(eye,look,roll,.55);
+ }else if(view3==='corner'){
+  /* The nearest camera position ahead of the car, at the corner it is
+     coming to - which is where a trackside camera actually lives. */
+  const f=((c.dist%LENGTH)+LENGTH)%LENGTH/LENGTH;
+  let best=null,bd=9;
+  for(const k of CORNERS){
+   let d=k.frac-f; if(d<-.02)d+=1;
+   if(d<bd){bd=d;best=k;}
+  }
+  const cd=((best?best.frac:0)*LENGTH);
+  const p=w3(cd+18,0);
+  const side=(best&&best.frac!==undefined&&lerpArr(kcen,cd)>0)?-1:1;
+  const eye=[p.x+p.nx*side*30,p.y+p.ny*side*30,8.5];
+  smoothCam(eye,[a.x,a.y,a.z+.6],0,.22);
+  cornerCam=best?best.n:null;
+ }else{
+  const back=w3(c.dist-14.5,(c.lane??0)*.95);
+  const near=w3(c.dist+7,(c.lane??0));
+  const eye=[back.x,back.y,back.z+3.6];
+  const look=[near.x*.62+lead.x*.38,near.y*.62+lead.y*.38,near.z+1.05];
+  smoothCam(eye,look,clamp(-(c.latV||0)*.02,-.05,.05),.30);
+ }
+}
+function smoothCam(eye,look,roll,lag){
+ if(!camPrev||camPrev.key!==view3+CIRCUIT.key){camPrev={e:eye.slice(),l:look.slice(),key:view3+CIRCUIT.key};}
+ const f=Math.min(1,lag*(sim.paused?1:1));
+ /* A long jump means the car crossed the line or was moved; snap rather than
+    fly across the circuit. */
+ const jump=Math.hypot(eye[0]-camPrev.e[0],eye[1]-camPrev.e[1])>90;
+ for(let i=0;i<3;i++){
+  camPrev.e[i]=jump?eye[i]:camPrev.e[i]+(eye[i]-camPrev.e[i])*f;
+  camPrev.l[i]=jump?look[i]:camPrev.l[i]+(look[i]-camPrev.l[i])*f;
+ }
+ aimCam(camPrev.e[0],camPrev.e[1],camPrev.e[2],camPrev.l[0],camPrev.l[1],camPrev.l[2],roll);
+}
+function drawStage(){
+ if(view3==='plan')return;
+ if(!W3||W3key!==CIRCUIT.key)build3D();
+ if(!stageSize())return;
+ const ctx=stageCtx,c=sim.car(selected)||sim.cars[0];
+ placeCam(c);
+ ctx.clearRect(0,0,VW3,VH3);
+ skyline(ctx);groundPlane(ctx);
+ trackAhead(ctx,c.dist);
+ haze(ctx);
+ /* cars, far to near, so the near ones cover the far ones */
+ const list=sim.cars.slice().sort((a,b)=>
+   Math.hypot(b.x-cam.x,b.y-cam.y)-Math.hypot(a.x-cam.x,a.y-cam.y));
+ const withPos=sim.cars.map(x=>{const w=w3(x.dist,x.lane??0);return{x,d:Math.hypot(w.x-cam.x,w.y-cam.y)};})
+   .sort((a,b)=>b.d-a.d);
+ for(const {x} of withPos){
+  if(view3==='onboard'&&x===c)continue;
+  drawCar(ctx,x,c.dist);
+ }
+ stageHud(c);
+}
+function stageHud(c){
+ const order=sim.order(),i=order.findIndex(x=>x.id===c.id);
+ const ahead=order[i-1],behind=order[i+1];
+ const gap=g=>g?((g.dist-c.dist)/Math.max(14,c.speed)):null;
+ const ga=ahead?Math.abs(gap(ahead)):null,gb=behind?Math.abs(gap(behind)):null;
+ $('#hud-driver').textContent=`P${i+1} · ${c.id} ${c.name}${c.drs?' · DRS':''}`;
+ $('#hud-speed').textContent=`${(c.speed*3.6).toFixed(0)} KM/H`;
+ $('#hud-gear').textContent=`GEAR ${c.gear||'N'} · ${(c.rpm||0).toLocaleString()} RPM`;
+ $('#hud-gap').textContent=(ga!=null?`AHEAD +${ga.toFixed(1)}`:'AHEAD —')+(gb!=null?`   BEHIND -${gb.toFixed(1)}`:'');
+ $('#hud-corner').textContent=view3==='corner'&&cornerCam?`CAMERA · TURN ${cornerCam}`
+   :view3==='onboard'?'ONBOARD':'CHASE';
+ $('#hud-thr').style.height=Math.max(2,(c.throttle||0)*.78)+'px';
+ $('#hud-brk').style.height=Math.max(2,(c.brake||0)*.78)+'px';
+}
+function setView(v){
+ view3=v;
+ $('#radar').hidden=v!=='plan';
+ $('#stage').hidden=v==='plan';
+ for(const b of document.querySelectorAll('#viewset button'))b.classList.toggle('on',b.dataset.view===v);
+ camPrev=null;
+ if(v!=='plan'){if(!W3||W3key!==CIRCUIT.key)build3D();drawStage();}
+ else radar();
+}
+
 window.RACECONTROL={get sim(){return sim;},get VPROF(){return VPROF;},get REFLAP(){return REFLAP;},get REFTIME(){return REFTIME;},get CIRCUIT(){return CIRCUIT;},get LENGTH(){return LENGTH;},get MPP(){return MPP;},get STEP(){return STEP;},get DRSZONES(){return DRSZONES;},get SECTORS(){return SECTORS;},get CIRCUITS(){return CIRCUITS;},NS,rebuild:buildCircuit,sampleV:d=>lerpArr(VPROF,d)};
 render();requestAnimationFrame(frame);
 
