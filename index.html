@@ -2306,9 +2306,23 @@ class RaceEngine{
       alongside, which is why a train forms behind a car that defends well. */
    /* Only once both cars are up to racing speed - at a standing start every
       car launches for itself, it does not queue behind the one in front. */
-   if(c.decision!=='Attack'&&gapAhead<45&&c.speed>30&&ahead.speed>30)
-    target=Math.min(target,Math.max(0,ahead.speed-(45-gapAhead)*.25));
-   if(!alongside&&gapAhead<14)target=Math.min(target,Math.max(0,ahead.speed-(14-gapAhead)*1.45));
+   /* A driver not committed to a move sits about a second back. Expressed as
+      a distance to settle at rather than a speed to give up, because the
+      second form compounds. */
+   if(c.decision!=='Attack'&&gapAhead<45&&c.speed>30&&ahead.speed>30){
+    const hold=Math.max(18,c.speed*.85);
+    target=Math.min(target,ahead.speed+(gapAhead-hold)*.30);
+   }
+   /* Nobody drives through the car in front. This converges on a following
+      distance instead of subtracting a fixed amount from the speed ahead:
+      the old form took a slice off every car in turn, so twenty-two of them
+      arriving at a slow corner compounded into a standstill - the field
+      would stop dead in a heap at the first corner and shuffle. */
+   if(!alongside){
+    const pf=Math.pow(PASSY,1.5);
+    const want=6.5+5.5*(1-pf);
+    if(gapAhead<want*2.4)target=Math.min(target,ahead.speed+(gapAhead-want)*.85);
+   }
    /* Alongside is not past. Whoever has the inside for the corner coming up
       has the corner, and a driver who has drawn level around the outside has
       to either make it stick through the exit or fall back in behind - which
