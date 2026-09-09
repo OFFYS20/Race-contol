@@ -3170,6 +3170,18 @@ function build3D(){
   pts[i]={x:cxs[i]*MPP,y:cys[i]*MPP,tx,ty,nx:-ty,ny:tx,
           k:kcen[i]/MPP,bank:clamp(Math.abs(kcen[i]/MPP)*260,0,.075)};
  }
+ /* A corner that is documented as banked gets its real figure rather than
+    the radius estimate: Jeddah's Turn 13 is twelve degrees. */
+ const SB=SCENERY[CIRCUIT.key];
+ if(SB&&SB.bank)for(const t in SB.bank){
+  const k=CORNERS[+t-1]; if(!k)continue;
+  const centre=posOf(k.frac*LENGTH), span=Math.round(120/(LENGTH/n));
+  for(let o=-span;o<=span;o++){
+   const idx=(Math.round(centre)+o+n)%n;
+   const f=1-Math.abs(o)/(span+1);
+   pts[idx].bank=Math.max(pts[idx].bank,SB.bank[t]*Math.PI/180*f);
+  }
+ }
  W3={pts,seg:LENGTH/n,key:CIRCUIT.key};W3key=CIRCUIT.key;
 }
 /* A point on the road surface, in world metres. lat is in the same units the
@@ -3241,6 +3253,257 @@ function quad(ctx,a,b,c,d,fill){
 }
 
 
+/* ------------------------------- TRACKSIDE -------------------------------
+   What stands beside the road. Built from the documented character of each
+   circuit rather than from photographs - there is no image source reachable
+   from here - so it is the right kind of place, not a survey of it: a street
+   circuit gets walls hard against the road with debris fencing above them
+   and floodlight masts, a permanent circuit gets run-off, barriers set back
+   and marshal posts.
+
+   Jeddah is the one described in detail. It runs at night on the Corniche:
+   walls painted in blocks right at the edge of a very fast street track,
+   fencing above them, lighting masts the whole way round, grandstands down
+   the main straight and at the last corner, palms along the seafront and the
+   Red Sea beyond the barrier on the seaward side. */
+const SCENERY={
+ /* Jeddah: 3,300 concrete wall sections and 13 km of catch fencing hard
+    against a track with almost no run-off, LED floodlighting for the night
+    race, a 280 m four-storey pit building on the main straight, grandstands
+    at the banked Turn 13 and the Turn 27 braking zone, and the Corniche
+    itself - reclaimed land around a lagoon, with the Red Sea beyond it. */
+ /* Jeddah at night, from the photographs: charcoal concrete barriers with a
+    white rail along the top, not painted blocks; a wide dark asphalt apron
+    between the kerb and the barrier with a green astroturf strip at its
+    edge; catch fencing on posts above the barrier; and the thing that makes
+    the place look like itself - purple and blue LED everywhere, uplighting
+    the palms and running along the structures. A pedestrian bridge crosses
+    the circuit, video screens face the grandstands, and the 280 m
+    four-storey pit building runs down the main straight. */
+ jeddah:{night:1,wall:1.15,off:2.6,fence:2.6,mast:120,palm:30,sea:1,
+   standTurns:[13,27],pitBuilding:{len:280,floors:4},skyline:1,
+   bank:{13:12},runoff:7,astro:1,rail:1,
+   neon:['#8b3fd6','#2f6fe0','#d0359a','#4b2fc9'],
+   bridges:[6,21],screens:[10,16,24],
+   stands:[[.955,.075]],
+   wallCols:['#23262c'],ground:'#0c0e12'},
+ monaco:{night:0,wall:1.25,off:2.2,fence:2.1,mast:0,palm:26,sea:1,
+   stands:[[.965,.05]],wallCols:['#e7e5dd','#c8202e'],ground:'#20242a'},
+ vegas:{night:1,wall:1.35,off:3.1,fence:2.4,mast:130,palm:0,sea:0,
+   stands:[[.95,.06]],wallCols:['#e7e5dd','#e7e5dd','#4B3BEF'],ground:'#1b1f26'},
+ singapore:{night:1,wall:1.3,off:2.6,fence:2.3,mast:95,palm:30,sea:1,
+   stands:[[.96,.06]],wallCols:['#e7e5dd','#c8202e'],ground:'#1b2026'},
+ baku:{night:0,wall:1.3,off:2.6,fence:2.3,mast:0,palm:0,sea:1,
+   stands:[[.955,.06]],wallCols:['#e7e5dd','#e7e5dd','#1b6fb5'],ground:'#20242a'},
+ miami:{night:0,wall:1.2,off:4.2,fence:2.2,mast:0,palm:40,sea:0,
+   stands:[[.955,.06]],wallCols:['#e7e5dd','#e0457b'],ground:'#22301f'},
+ montreal:{night:0,wall:1.2,off:3.4,fence:2.2,mast:0,palm:0,sea:1,
+   stands:[[.96,.05]],wallCols:['#e7e5dd','#c8202e'],ground:'#233020'},
+ madrid:{night:0,wall:1.25,off:3.6,fence:2.2,mast:0,palm:0,sea:0,
+   stands:[[.955,.06]],wallCols:['#e7e5dd','#c8202e'],ground:'#2a2c22'},
+ def:{night:0,wall:0,off:9,fence:0,mast:0,palm:0,sea:0,
+   stands:[[.955,.05]],wallCols:['#e7e5dd','#b8353c'],ground:'#212a20'}
+};
+const scenery=()=>SCENERY[CIRCUIT.key]||SCENERY.def;
+/* A repeatable pseudo-random for scenery placement, so the palms do not
+   dance about between frames. */
+const shash=n=>{let x=Math.sin(n*127.1)*43758.5453;return x-Math.floor(x);};
+function trackside(ctx,dist0){
+ const S=scenery(),seg=W3.seg;
+ if(!S.wall&&!S.mast&&!S.palm&&!S.stands)return;
+ const e=HALFW+S.off;
+ const far=Math.round(700/seg);
+ for(let k=far;k>=-Math.round(60/seg);k-=1){
+  const d0=dist0+k*seg,d1=d0+seg;
+  const a0=w3(d0,0),a1=w3(d1,0);
+  const md=Math.hypot(a0.x-cam.x,a0.y-cam.y);
+  if(md>760)continue;
+  const step=md>240?3:1;
+  if(md>240&&Math.abs(k)%3)continue;
+  const w=seg*(md>240?3:1);
+  const b1=w3(d0+w,0);
+  /* the apron: asphalt run-off out to the barrier, with a strip of green at
+     the edge of the road, exactly as it is painted */
+  if(S.runoff){
+   const r=e+S.runoff;
+   for(const sgn of[1,-1]){
+    quad(ctx,[a0.x+a0.nx*(HALFW+.1)*sgn,a0.y+a0.ny*(HALFW+.1)*sgn,a0.z],
+             [b1.x+b1.nx*(HALFW+.1)*sgn,b1.y+b1.ny*(HALFW+.1)*sgn,b1.z],
+             [b1.x+b1.nx*r*sgn,b1.y+b1.ny*r*sgn,0],
+             [a0.x+a0.nx*r*sgn,a0.y+a0.ny*r*sgn,0],'#1b1e24');
+    if(S.astro)
+     quad(ctx,[a0.x+a0.nx*(HALFW+1.6)*sgn,a0.y+a0.ny*(HALFW+1.6)*sgn,a0.z],
+              [b1.x+b1.nx*(HALFW+1.6)*sgn,b1.y+b1.ny*(HALFW+1.6)*sgn,b1.z],
+              [b1.x+b1.nx*(HALFW+2.5)*sgn,b1.y+b1.ny*(HALFW+2.5)*sgn,0],
+              [a0.x+a0.nx*(HALFW+2.5)*sgn,a0.y+a0.ny*(HALFW+2.5)*sgn,0],'#164d2b');
+   }
+  }
+  /* the barrier */
+  if(S.wall){
+   const blk=Math.floor(d0/17)%S.wallCols.length;
+   for(const sgn of[1,-1]){
+    const ew=e+(S.runoff||0);
+    quad(ctx,[a0.x+a0.nx*ew*sgn,a0.y+a0.ny*ew*sgn,0],
+             [b1.x+b1.nx*ew*sgn,b1.y+b1.ny*ew*sgn,0],
+             [b1.x+b1.nx*ew*sgn,b1.y+b1.ny*ew*sgn,S.wall],
+             [a0.x+a0.nx*ew*sgn,a0.y+a0.ny*ew*sgn,S.wall],S.wallCols[blk]);
+    /* the white rail along the top, which is what you actually pick out */
+    if(S.rail)
+     quad(ctx,[a0.x+a0.nx*ew*sgn,a0.y+a0.ny*ew*sgn,S.wall],
+              [b1.x+b1.nx*ew*sgn,b1.y+b1.ny*ew*sgn,S.wall],
+              [b1.x+b1.nx*ew*sgn,b1.y+b1.ny*ew*sgn,S.wall+.24],
+              [a0.x+a0.nx*ew*sgn,a0.y+a0.ny*ew*sgn,S.wall+.24],'#cfd2d8');
+    /* an LED line along the barrier, which is the colour of the place */
+    if(S.neon&&md<300){
+     const nc=S.neon[Math.floor(d0/42)%S.neon.length];
+     quad(ctx,[a0.x+a0.nx*(ew+.05)*sgn,a0.y+a0.ny*(ew+.05)*sgn,S.wall*.55],
+              [b1.x+b1.nx*(ew+.05)*sgn,b1.y+b1.ny*(ew+.05)*sgn,S.wall*.55],
+              [b1.x+b1.nx*(ew+.05)*sgn,b1.y+b1.ny*(ew+.05)*sgn,S.wall*.55+.11],
+              [a0.x+a0.nx*(ew+.05)*sgn,a0.y+a0.ny*(ew+.05)*sgn,S.wall*.55+.11],nc);
+    }
+    if(S.fence&&md<340){
+     const e2=e+(S.runoff||0);
+     quad(ctx,[a0.x+a0.nx*e2*sgn,a0.y+a0.ny*e2*sgn,S.wall],
+              [b1.x+b1.nx*e2*sgn,b1.y+b1.ny*e2*sgn,S.wall],
+              [b1.x+b1.nx*e2*sgn,b1.y+b1.ny*e2*sgn,S.wall+S.fence],
+              [a0.x+a0.nx*e2*sgn,a0.y+a0.ny*e2*sgn,S.wall+S.fence],
+              'rgba(158,166,176,.075)');
+     /* posts every few metres, which is what you actually see of a fence */
+     if(Math.floor(d0/6)!==Math.floor((d0-w)/6))
+      quad(ctx,[a0.x+a0.nx*e2*sgn,a0.y+a0.ny*e2*sgn,S.wall],
+               [a0.x+a0.nx*e2*sgn+a0.tx*.16,a0.y+a0.ny*e2*sgn+a0.ty*.16,S.wall],
+               [a0.x+a0.nx*e2*sgn+a0.tx*.16,a0.y+a0.ny*e2*sgn+a0.ty*.16,S.wall+S.fence],
+               [a0.x+a0.nx*e2*sgn,a0.y+a0.ny*e2*sgn,S.wall+S.fence],'rgba(126,134,146,.42)');
+    }
+   }
+  }
+ }
+ /* things that stand at intervals rather than continuously */
+ const props=[];
+ if(S.mast)for(let m=0;m<760;m+=S.mast){
+  const d=dist0+m,a=w3(d,0),sgn=shash(Math.floor(d/S.mast))>.5?1:-1;
+  props.push({t:'mast',a,sgn,d:m});
+ }
+ if(S.palm)for(let m=0;m<420;m+=S.palm){
+  const d=dist0+m,a=w3(d,0),h=shash(Math.floor(d/S.palm)+7);
+  props.push({t:'palm',a,sgn:h>.5?1:-1,d:m,h:5.5+h*3});
+ }
+ /* Stands that belong to a named corner rather than a lap fraction. */
+ for(const t of (S.standTurns||[])){
+  const k=CORNERS[t-1]; if(!k)continue;
+  let rel=((k.frac*LENGTH-dist0)%LENGTH+LENGTH)%LENGTH;
+  if(rel>640)continue;
+  for(let m=-70;m<70;m+=16){
+   if(rel+m<-40||rel+m>700)continue;
+   const a=w3(dist0+rel+m,0);
+   props.push({t:'stand',a,sgn:shash(t*3+m)>.45?1:-1,d:rel+m});
+  }
+ }
+ /* Pedestrian bridges span the circuit, and video screens face the stands. */
+ for(const t of (S.bridges||[])){
+  const k=CORNERS[t-1]; if(!k)continue;
+  let rel=((k.frac*LENGTH-dist0)%LENGTH+LENGTH)%LENGTH;
+  if(rel<-30||rel>620)continue;
+  props.push({t:'bridge',a:w3(dist0+rel,0),sgn:1,d:rel});
+ }
+ for(const t of (S.screens||[])){
+  const k=CORNERS[t-1]; if(!k)continue;
+  let rel=((k.frac*LENGTH-dist0)%LENGTH+LENGTH)%LENGTH;
+  if(rel>620)continue;
+  props.push({t:'screen',a:w3(dist0+rel,0),sgn:shash(t)>.5?1:-1,d:rel});
+ }
+ /* The pit building runs down the main straight on the pit side. */
+ if(S.pitBuilding){
+  const start=(PITIN*LENGTH+40);
+  let rel=((start-dist0)%LENGTH+LENGTH)%LENGTH;
+  for(let m=0;m<S.pitBuilding.len;m+=20){
+   if(rel+m>700)break;
+   const a=w3(dist0+rel+m,0);
+   props.push({t:'pits',a,sgn:CIRCUIT.pitSide>0?1:-1,d:rel+m,floors:S.pitBuilding.floors});
+  }
+ }
+ for(const [f,len] of (S.stands||[])){
+  const start=f*LENGTH;
+  let rel=((start-dist0)%LENGTH+LENGTH)%LENGTH;
+  if(rel>640)continue;
+  for(let m=0;m<len*LENGTH&&m+rel<700;m+=16){
+   const a=w3(dist0+rel+m,0);
+   props.push({t:'stand',a,sgn:CIRCUIT.pitSide>0?-1:1,d:rel+m});
+  }
+ }
+ props.sort((x,y)=>y.d-x.d);
+ for(const P of props){
+  const a=P.a,o=e+(P.t==='stand'?7:P.t==='palm'?5.5:2.4);
+  const bx=a.x+a.nx*o*P.sgn, by=a.y+a.ny*o*P.sgn;
+  if(P.t==='mast'){
+   quad(ctx,[bx-a.tx*.28,by-a.ty*.28,0],[bx+a.tx*.28,by+a.ty*.28,0],
+            [bx+a.tx*.28,by+a.ty*.28,15],[bx-a.tx*.28,by-a.ty*.28,15],'#2b2f36');
+   quad(ctx,[bx-a.tx*1.9,by-a.ty*1.9,15],[bx+a.tx*1.9,by+a.ty*1.9,15],
+            [bx+a.tx*1.9,by+a.ty*1.9,16.3],[bx-a.tx*1.9,by-a.ty*1.9,16.3],
+            scenery().night?'#fff6d8':'#8d939c');
+  }else if(P.t==='palm'){
+   quad(ctx,[bx-a.tx*.18,by-a.ty*.18,0],[bx+a.tx*.18,by+a.ty*.18,0],
+            [bx+a.tx*.18,by+a.ty*.18,P.h],[bx-a.tx*.18,by-a.ty*.18,P.h],'#3a3227');
+   const lit=S.neon?S.neon[Math.floor(P.d/30)%S.neon.length]:null;
+   for(let q=0;q<5;q++){
+    const ang=q/5*TAU+P.d,ex=Math.cos(ang)*2.6,ey=Math.sin(ang)*2.6;
+    quad(ctx,[bx-a.tx*.3,by-a.ty*.3,P.h],[bx+a.tx*.3,by+a.ty*.3,P.h],
+             [bx+ex+a.tx*.5,by+ey+a.ty*.5,P.h-.7],[bx+ex-a.tx*.5,by+ey-a.ty*.5,P.h-.7],
+             q%2?'#1d3324':'#26402c');
+   }
+   /* uplighting at the base, which is why they read purple at night */
+   if(lit)quad(ctx,[bx-a.tx*.5,by-a.ty*.5,0],[bx+a.tx*.5,by+a.ty*.5,0],
+                   [bx+a.tx*.5,by+a.ty*.5,1.6],[bx-a.tx*.5,by-a.ty*.5,1.6],lit);
+  }else if(P.t==='bridge'){
+   const a2=P.a,span=e+(S.runoff||0)+10;
+   const H=7.4;
+   for(const sgn of[1,-1]){
+    const px=a2.x+a2.nx*span*sgn, py=a2.y+a2.ny*span*sgn;
+    quad(ctx,[px-a2.tx*1.4,py-a2.ty*1.4,0],[px+a2.tx*1.4,py+a2.ty*1.4,0],
+             [px+a2.tx*1.4,py+a2.ty*1.4,H],[px-a2.tx*1.4,py-a2.ty*1.4,H],'#2a2e36');
+   }
+   const L=[a2.x+a2.nx*span,a2.y+a2.ny*span],R=[a2.x-a2.nx*span,a2.y-a2.ny*span];
+   quad(ctx,[L[0]-a2.tx*2.2,L[1]-a2.ty*2.2,H],[R[0]-a2.tx*2.2,R[1]-a2.ty*2.2,H],
+            [R[0]+a2.tx*2.2,R[1]+a2.ty*2.2,H],[L[0]+a2.tx*2.2,L[1]+a2.ty*2.2,H],'#343944');
+   quad(ctx,[L[0]-a2.tx*2.2,L[1]-a2.ty*2.2,H+2.1],[R[0]-a2.tx*2.2,R[1]-a2.ty*2.2,H+2.1],
+            [R[0]+a2.tx*2.2,R[1]+a2.ty*2.2,H+2.1],[L[0]+a2.tx*2.2,L[1]+a2.ty*2.2,H+2.1],'#1d2129');
+   if(S.neon)
+    quad(ctx,[L[0]-a2.tx*2.4,L[1]-a2.ty*2.4,H+2.15],[R[0]-a2.tx*2.4,R[1]-a2.ty*2.4,H+2.15],
+             [R[0]+a2.tx*2.4,R[1]+a2.ty*2.4,H+2.15],[L[0]+a2.tx*2.4,L[1]+a2.ty*2.4,H+2.15],S.neon[1]);
+  }else if(P.t==='screen'){
+   const o2=e+(S.runoff||0)+4;
+   const px=a.x+a.nx*o2*P.sgn, py=a.y+a.ny*o2*P.sgn;
+   quad(ctx,[px-a.tx*4.2,py-a.ty*4.2,2.2],[px+a.tx*4.2,py+a.ty*4.2,2.2],
+            [px+a.tx*4.2,py+a.ty*4.2,7.0],[px-a.tx*4.2,py-a.ty*4.2,7.0],'#0e1014');
+   quad(ctx,[px-a.tx*3.9,py-a.ty*3.9,2.5],[px+a.tx*3.9,py+a.ty*3.9,2.5],
+            [px+a.tx*3.9,py+a.ty*3.9,6.7],[px-a.tx*3.9,py-a.ty*3.9,6.7],
+            ['#7d3fb8','#2f6fe0','#b8384f'][Math.floor(sim.time/3+P.d)%3]);
+  }else if(P.t==='pits'){
+   const H=4.2*P.floors/4*4;
+   const o2=e+16;
+   const px=a.x+a.nx*o2*P.sgn, py=a.y+a.ny*o2*P.sgn;
+   quad(ctx,[px-a.tx*10,py-a.ty*10,0],[px+a.tx*10,py+a.ty*10,0],
+            [px+a.tx*10,py+a.ty*10,H],[px-a.tx*10,py-a.ty*10,H],'#2b313a');
+   for(let fl=1;fl<=P.floors;fl++){
+    const z=H*fl/P.floors-1.1;
+    quad(ctx,[px-a.tx*9.4,py-a.ty*9.4,z],[px+a.tx*9.4,py+a.ty*9.4,z],
+             [px+a.tx*9.4,py+a.ty*9.4,z+.75],[px-a.tx*9.4,py-a.ty*9.4,z+.75],
+             scenery().night?'rgba(255,238,190,.62)':'rgba(150,180,210,.5)');
+   }
+   quad(ctx,[px-a.tx*10.4,py-a.ty*10.4,H],[px+a.tx*10.4,py+a.ty*10.4,H],
+            [px+a.tx*10.4,py+a.ty*10.4,H+.6],[px-a.tx*10.4,py-a.ty*10.4,H+.6],'#171a20');
+  }else{
+   /* a tiered grandstand: a raked face and a roof */
+   quad(ctx,[bx-a.tx*8,by-a.ty*8,0],[bx+a.tx*8,by+a.ty*8,0],
+            [bx+a.tx*8,by+a.ty*8,9],[bx-a.tx*8,by-a.ty*8,9],'#262a31');
+   const fx=a.nx*(o-6)*P.sgn,fy=a.ny*(o-6)*P.sgn;
+   quad(ctx,[a.x+fx-a.tx*8,a.y+fy-a.ty*8,1.2],[a.x+fx+a.tx*8,a.y+fy+a.ty*8,1.2],
+            [bx+a.tx*8,by+a.ty*8,8.4],[bx-a.tx*8,by-a.ty*8,8.4],'#333944');
+   quad(ctx,[a.x+fx-a.tx*8,a.y+fy-a.ty*8,10.4],[a.x+fx+a.tx*8,a.y+fy+a.ty*8,10.4],
+            [bx+a.tx*8,by+a.ty*8,10.9],[bx-a.tx*8,by-a.ty*8,10.9],'#1b1f26');
+  }
+ }
+}
 /* --------------------------------- SCENE --------------------------------- */
 let view3='plan',camPrev=null,stageCtx=null,cornerCam=null;
 function stageSize(){
@@ -3269,7 +3532,7 @@ function skyline(ctx){
    that is what puts the horizon where the camera is actually looking. */
 function groundPlane(ctx){
  const wet=sim.weather;
- const col=wet>.2?'#1d2329':'#212a20';
+ const col=wet>.2?'#1d2329':(scenery().ground||'#212a20');
  const R=2600;
  for(let k=0;k<8;k++){
   const a0=k/8*TAU,a1=(k+1)/8*TAU;
@@ -3279,6 +3542,30 @@ function groundPlane(ctx){
  }
 }
 /* Distance haze, so the road goes away instead of stopping. */
+function water(ctx){
+ const S=scenery(); if(!S.sea)return;
+ const sgn=CIRCUIT.pitSide>0?-1:1;
+ const a=w3(sim.car(selected)?sim.car(selected).dist+240:0,0);
+ const o=HALFW+S.off+30, R=900;
+ const bx=a.x+a.nx*o*sgn, by=a.y+a.ny*o*sgn;
+ quad(ctx,[bx-a.tx*R,by-a.ty*R,-.6],[bx+a.tx*R,by+a.ty*R,-.6],
+          [bx+a.nx*R*sgn+a.tx*R,by+a.ny*R*sgn+a.ty*R,-.6],
+          [bx+a.nx*R*sgn-a.tx*R,by+a.ny*R*sgn-a.ty*R,-.6],
+          S.night?'#0a1826':'#123048');
+}
+function skylineFar(ctx){
+ const S=scenery(); if(!S.skyline)return;
+ const c=sim.car(selected)||sim.cars[0];
+ const a=w3(c.dist+600,0),sgn=CIRCUIT.pitSide>0?1:-1;
+ for(let i=0;i<16;i++){
+  const t=(i-8)*90, h=26+shash(i*13)*54, w=18+shash(i*7)*26;
+  const o=HALFW+180+shash(i*3)*120;
+  const bx=a.x+a.nx*o*sgn+a.tx*t, by=a.y+a.ny*o*sgn+a.ty*t;
+  quad(ctx,[bx-a.tx*w,by-a.ty*w,0],[bx+a.tx*w,by+a.ty*w,0],
+           [bx+a.tx*w,by+a.ty*w,h],[bx-a.tx*w,by-a.ty*w,h],
+           S.night?'#131a26':'#2a323d');
+ }
+}
 function haze(ctx){
  const hz=proj(cam.x+cam.fx*2200,cam.y+cam.fy*2200,0);
  const y=hz?clamp(hz.y,0,VH3):VH3*.5;
@@ -3387,18 +3674,55 @@ function drawCar(ctx,c,dist0){
  const dim=(hex,f)=>{const n=parseInt(hex.slice(1),16);
   return `rgb(${Math.round((n>>16&255)*f)},${Math.round((n>>8&255)*f)},${Math.round((n&255)*f)})`;};
  /* A box, given its extent along the car, across it and up. */
- const box=(l0,l1,w,h0,h1,c1,c2,c3)=>[
-  {p:[P(l1,-w,h1),P(l1,w,h1),P(l0,w,h1),P(l0,-w,h1)],c:c1},
-  {p:[P(l1,w,h1),P(l1,w,h0),P(l0,w,h0),P(l0,w,h1)],c:c2},
-  {p:[P(l1,-w,h1),P(l1,-w,h0),P(l0,-w,h0),P(l0,-w,h1)],c:c2},
-  {p:[P(l1,-w,h1),P(l1,w,h1),P(l1,w,h0),P(l1,-w,h0)],c:c3},
-  {p:[P(l0,-w,h1),P(l0,w,h1),P(l0,w,h0),P(l0,-w,h0)],c:c3}];
+ /* A box along the car. w is a half-width for a body on the centreline, or
+    a pair for one that sits to one side - which is how the wheels go on. */
+ const box=(l0,l1,w,h0,h1,c1,c2,c3)=>{
+  const wa=Array.isArray(w)?w[0]:-w, wb=Array.isArray(w)?w[1]:w;
+  return[
+  {p:[P(l1,wa,h1),P(l1,wb,h1),P(l0,wb,h1),P(l0,wa,h1)],c:c1},
+  {p:[P(l1,wb,h1),P(l1,wb,h0),P(l0,wb,h0),P(l0,wb,h1)],c:c2},
+  {p:[P(l1,wa,h1),P(l1,wa,h0),P(l0,wa,h0),P(l0,wa,h1)],c:c2},
+  {p:[P(l1,wa,h1),P(l1,wb,h1),P(l1,wb,h0),P(l1,wa,h0)],c:c3},
+  {p:[P(l0,wa,h1),P(l0,wb,h1),P(l0,wb,h0),P(l0,wa,h0)],c:c3}];};
  const body=dim(col,.92*shade),side=dim(col,.58*shade),cap=dim(col,.74*shade);
- const faces=[
-  ...box(-2.55,2.30,.92,.06,.30,body,side,cap),          /* floor and sidepods */
-  ...box(-1.70,.55,.42,.30,.66,dim(col,.99*shade),dim(col,.66*shade),'#14161c'), /* cover */
-  ...box(-2.42,-2.16,.86,.62,.95,dim(col,.85*shade),'#1b1d22','#1b1d22'),        /* rear wing */
-  ...box(2.30,2.62,.90,.03,.12,dim(col,.8*shade),'#1b1d22','#1b1d22')];          /* front wing */
+ const tyre='#15161a',dark='#1b1d22';
+ const near=Math.hypot(cx-cam.x,cy-cam.y,cz-cam.z);
+ /* A Formula One car is mostly air. Close up it is built properly - wheels
+    standing proud of a narrow body, a nose on a raised chassis, sidepods,
+    an airbox and a wing on pylons. Far enough away that none of that reads,
+    it is three boxes, because drawing fifty faces for four pixels is waste. */
+ const faces=near>95?[
+  ...box(-2.30,2.10,.55,.06,.34,body,side,cap),
+  ...box(-1.85,.35,.36,.34,.66,dim(col,.99*shade),dim(col,.66*shade),dark),
+  ...box(-2.30,-2.05,.78,.60,.94,dim(col,.85*shade),dark,dark)]:[
+  /* floor and the narrow survival cell */
+  ...box(-2.15,1.05,.52,.04,.16,dim(col,.72*shade),dim(col,.5*shade),dark),
+  ...box(-1.95,.95,.42,.16,.44,body,side,cap),
+  /* sidepods, wider and lower than the chassis */
+  ...box(-1.10,.60,.80,.14,.46,dim(col,.86*shade),dim(col,.56*shade),cap),
+  /* the nose, on the raised chassis, tapering to the wing */
+  ...box(.95,2.05,.20,.26,.44,body,side,cap),
+  ...box(2.00,2.34,.14,.20,.32,dim(col,.9*shade),side,cap),
+  /* front wing: wide, low, with endplates */
+  ...box(2.28,2.66,.88,.03,.13,dim(col,.8*shade),dark,dark),
+  ...box(2.24,2.70,[.84,.92],.03,.30,dark,dark,dark),
+  ...box(2.24,2.70,[-.92,-.84],.03,.30,dark,dark,dark),
+  /* cockpit surround and the halo above it */
+  ...box(.30,1.00,.33,.44,.60,dim(col,.6*shade),dim(col,.42*shade),'#0d0e11'),
+  ...box(.32,1.24,.30,.60,.72,'#26282e','#26282e','#26282e'),
+  /* airbox and engine cover running back to the wing */
+  ...box(-1.55,.42,.34,.44,.78,dim(col,.99*shade),dim(col,.62*shade),dark),
+  ...box(-2.05,-1.50,.30,.40,.58,dim(col,.8*shade),dim(col,.5*shade),dark),
+  /* wheels, standing proud on both sides */
+  ...box(1.15,2.00,[.66,1.02],.02,.68,tyre,tyre,'#2a2c31'),
+  ...box(1.15,2.00,[-1.02,-.66],.02,.68,tyre,tyre,'#2a2c31'),
+  ...box(-2.00,-1.15,[.68,1.04],.02,.70,tyre,tyre,'#2a2c31'),
+  ...box(-2.00,-1.15,[-1.04,-.68],.02,.70,tyre,tyre,'#2a2c31'),
+  /* rear wing on its pylon, with endplates */
+  ...box(-2.32,-2.06,.76,.66,1.00,dim(col,.88*shade),dark,dark),
+  ...box(-2.36,-2.02,[.74,.82],.52,1.02,dark,dark,dark),
+  ...box(-2.36,-2.02,[-.82,-.74],.52,1.02,dark,dark,dark),
+  ...box(-2.30,-1.90,.09,.44,.68,dark,dark,dark)];
  faces.sort((u,v)=>{
   const m=q=>q.p.reduce((s2,z)=>s2+(z[0]-cam.x)*cam.fx+(z[1]-cam.y)*cam.fy+(z[2]-cam.z)*cam.fz,0);
   return m(v)-m(u);});
@@ -3473,8 +3797,9 @@ function drawStage(){
  const ctx=stageCtx,c=sim.car(selected)||sim.cars[0];
  placeCam(c);
  ctx.clearRect(0,0,VW3,VH3);
- skyline(ctx);groundPlane(ctx);
+ skyline(ctx);groundPlane(ctx);water(ctx);skylineFar(ctx);
  trackAhead(ctx,c.dist);
+ trackside(ctx,c.dist);
  haze(ctx);
  /* cars, far to near, so the near ones cover the far ones */
  const list=sim.cars.slice().sort((a,b)=>
