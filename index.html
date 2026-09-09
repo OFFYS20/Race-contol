@@ -7,6 +7,15 @@
 color-scheme:light;font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;font-size:15px}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+.weekend{border:1px solid var(--rule);border-radius:3px;padding:8px 9px;margin-bottom:10px;background:var(--paper-3)}
+.weekend>span{font-size:9px;letter-spacing:.14em;color:var(--muted);display:block;margin-bottom:6px}
+.wk-strip{display:flex;gap:4px;margin-bottom:7px}
+.wk-strip button{flex:1;font-size:9.5px;letter-spacing:.06em;padding:5px 2px;border:1px solid var(--rule);background:var(--paper);color:var(--faint);border-radius:2px;cursor:pointer;text-align:center}
+.wk-strip button.done{color:var(--ink);border-color:var(--muted);background:var(--paper-2)}
+.wk-strip button.done:hover{border-color:var(--indigo);color:var(--indigo)}
+.wk-strip button.now{color:#fff;background:var(--indigo);border-color:var(--indigo);font-weight:600}
+.wk-strip button:disabled{cursor:default}
+.wk-note{font-size:10px;line-height:1.35;color:var(--muted);margin:0 0 6px}
 html,body{height:100%}
 body{margin:0;background:var(--paper);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased;
 background-image:linear-gradient(var(--rule) 1px,transparent 1px),linear-gradient(90deg,var(--rule) 1px,transparent 1px);
@@ -346,7 +355,7 @@ dialog{width:calc(100% - 16px);max-height:94dvh}
 <section class="panel tower" data-mobile="track"><div class="panel-head"><h2>Timing</h2><span>LIVE</span></div><div class="tower-head"><span>POS / CAR</span><span>INTERVAL</span></div><div id="timing"></div><div class="tower-foot" id="tower-note"><span>Click a car to inspect its decisions.</span></div></section>
 <section class="panel track" data-mobile="track"><div class="panel-head"><h2>Circuit</h2><div><button id="projection" class="small">2D / 3D</button><span class="live">LIVE POSITION</span></div></div><div id="radar" class="radar"></div><div class="map-footer"><span id="selected-sector">SECTOR MICRO-DELTAS</span><label>Replay <input id="replay" type="range" min="0" max="159" value="159" aria-label="Radar replay, latest at right"></label><button id="live" class="small">Live</button></div></section>
 <section class="cameras" data-mobile="track"><div class="panel"><div class="panel-head"><h2>Corner cam</h2><span id="corner-meta">—</span></div><div id="corner" class="camera"></div></div><div class="panel"><div class="panel-head"><h2>Pit lane</h2><span id="pit-light">EXIT RED</span></div><div id="pitcam" class="camera"></div></div></section>
-<section class="panel control" data-mobile="control"><div class="panel-head"><h2>Console</h2><span>HUMAN AUTHORITY</span></div><div class="next"><span>NEXT OPERATION</span><h3 id="next-title">Begin formation</h3><p id="next-copy">The field is ready. Car 41 will start from the pit lane.</p><button id="next" class="primary wide" data-command="formation">Begin formation lap</button></div><details><summary>Start &amp; pit protocol</summary><div class="button-grid"><button data-command="grid" id="verify-btn">Verify grid</button><button data-command="lights">Arm grid lights</button><button data-command="pit">Pit exit green</button></div></details><details><summary>Recovery &amp; Safety Car</summary><div class="button-grid"><button data-command="medical">Dispatch medical</button><button data-command="repair">Authorise repair</button><button data-command="unlap">Unlap eligible cars</button><button data-command="scin">SC in this lap</button></div><p class="status-line" id="recovery-state">Medical cover available · circuit clear</p></details><details><summary>Weather &amp; resumption</summary><label class="weather-control">Surface water <input id="weather" type="range" min="0" max="100" value="0"><span id="water">Dry</span></label><button id="wx-auto" class="small wide" aria-pressed="true">Live weather · on</button><div class="button-grid"><button data-command="standing">Standing restart</button><button data-command="rolling">Rolling restart</button><button data-command="finish">No resumption / results</button></div></details><div class="panel-head inset"><h2>StewardAI</h2><span>PRE-SCREEN ONLY</span></div><div id="incidents"></div><button class="wide ledger" id="documents">Documents <span id="document-count">0</span></button><button class="wide ledger" id="qualifying">Starting grid</button><button class="wide ledger" id="championship">Championship <span id="race-count">0</span></button></section>
+<section class="panel control" data-mobile="control"><div class="panel-head"><h2>Console</h2><span>HUMAN AUTHORITY</span></div><div class="weekend"><span id="wk-label">GRAND PRIX WEEKEND</span><div class="wk-strip" id="wk-strip"></div><p class="wk-note" id="wk-note"></p><button id="run-session" class="small wide">Run next session</button></div><div class="next"><span>NEXT OPERATION</span><h3 id="next-title">Begin formation</h3><p id="next-copy">The field is ready. Car 41 will start from the pit lane.</p><button id="next" class="primary wide" data-command="formation">Begin formation lap</button></div><details><summary>Start &amp; pit protocol</summary><div class="button-grid"><button data-command="grid" id="verify-btn">Verify grid</button><button data-command="lights">Arm grid lights</button><button data-command="pit">Pit exit green</button></div></details><details><summary>Recovery &amp; Safety Car</summary><div class="button-grid"><button data-command="medical">Dispatch medical</button><button data-command="repair">Authorise repair</button><button data-command="unlap">Unlap eligible cars</button><button data-command="scin">SC in this lap</button></div><p class="status-line" id="recovery-state">Medical cover available · circuit clear</p></details><details><summary>Weather &amp; resumption</summary><label class="weather-control">Surface water <input id="weather" type="range" min="0" max="100" value="0"><span id="water">Dry</span></label><button id="wx-auto" class="small wide" aria-pressed="true">Live weather · on</button><div class="button-grid"><button data-command="standing">Standing restart</button><button data-command="rolling">Rolling restart</button><button data-command="finish">No resumption / results</button></div></details><div class="panel-head inset"><h2>StewardAI</h2><span>PRE-SCREEN ONLY</span></div><div id="incidents"></div><button class="wide ledger" id="documents">Documents <span id="document-count">0</span></button><button class="wide ledger" id="qualifying">Starting grid</button><button class="wide ledger" id="championship">Championship <span id="race-count">0</span></button></section>
 <section class="panel telemetry" data-mobile="telemetry"><div class="panel-head"><h2>Telemetry</h2><div class="selectors"><label>Car <select id="car-select"></select></label><label>Compare <select id="compare-select"></select></label></div></div><div class="telemetry-layout"><div><div class="metrics" id="metrics"></div><div class="traces" id="traces"></div></div><div class="data-column"><h3>Biometric & impact</h3><div id="medical"></div><h3>Tyres &amp; strategy</h3><div id="technical"></div></div></div><div class="decision-card"><span>AUTONOMOUS DRIVER POLICY</span><h3 id="decision-title">Holding formation</h3><p id="decision-reason">Awaiting the director's signal.</p><div class="pressure" id="pressure-line"></div><div id="utilities"></div></div></section>
 <section class="panel radio" data-mobile="radio"><div class="panel-head"><h2>Comms</h2><span>7 ch</span></div><div class="radio-tabs"><button data-comms="team" class="active">Team</button><button data-comms="radio">Messages</button><button data-comms="ops">Control</button><button data-comms="fia">FIA</button><button data-comms="ai">Decisions</button></div><label class="comms-filter" id="team-filter-row">Team <select id="team-filter"><option value="">All teams</option></select></label>
 <div class="fia-compose" id="fia-compose" hidden>
@@ -773,9 +782,12 @@ const wanderAt=(style,frac)=>style.h[0].a*Math.sin(TAU*style.h[0].f*frac+style.h
 /* Inside of the corner the car is about to reach - where a defender covers. */
 const insideAhead=d=>{const k=lerpArr(kcen,d+70);return Math.abs(k)<1/260?0:(k>0?1:-1);};
 
-function pointsFor(completed,totalLaps,greenLaps){if(greenLaps<2||completed<2)return {band:'No points',points:[]};const r=completed/totalLaps;return r<.25?{band:'Under 25%',points:[6,4,3,2,1]}:r<.5?{band:'25–50%',points:[13,10,8,6,5,4,3,2,1]}:r<.75?{band:'50–75%',points:[19,14,12,10,8,6,4,3,2,1]}:{band:'Full points',points:[25,18,15,12,10,8,6,4,2,1]};}
+const SPRINT_POINTS=[8,7,6,5,4,3,2,1];
+function pointsFor(completed,totalLaps,greenLaps,isSprint){
+ if(isSprint)return{band:'Sprint',points:SPRINT_POINTS};if(greenLaps<2||completed<2)return {band:'No points',points:[]};const r=completed/totalLaps;return r<.25?{band:'Under 25%',points:[6,4,3,2,1]}:r<.5?{band:'25–50%',points:[13,10,8,6,5,4,3,2,1]}:r<.75?{band:'50–75%',points:[19,14,12,10,8,6,4,3,2,1]}:{band:'Full points',points:[25,18,15,12,10,8,6,4,2,1]};}
 class RaceEngine{
- constructor(seed=2026){this.seed=seed>>>0;this.time=0;this.nextSample=0;this.phaseAt=0;this.startAt=0;this.scEndAt=0;this.resumeType=null;this.phase='FORMATION_READY';this.flag='GREEN';this.paused=true;this.rate=4;this.totalLaps=CIRCUIT.laps;this.weather=0;this.events=[];this.documents=[];this.incidents=[];this.burn=94/(50*6000);this.liveWeather=true;this.cast={};this.sc={on:false,dist:0,speed:0,state:null,queue:[]};this.wx={rain:0,target:0,at:150,lineDry:0};this.decisions=[];this.teamRadio=[];this.fiaRadio=[];this.messages=[];this.stewardsQueue=[];this.filed=false;this.samples=[];this.replay=[];this.snapshots={};this.triggers=new Set();this.gridClear=false;this.pitExit=false;this.lights=0;this.greenLaps=0;this.greenStreak=0;this.lastLeaderLap=0;this.scTime=0;this.scLap=null;this.unlapLap=null;this.unlapAt=0;this.returnOrders=[];this.result=null;this.suspension=null;this.recovery=null;this.scenario=1;this.campaign=true;this.cars=GRID2026.map(([id,name,code,teamId,pace,craft,cons],i)=>{
+ constructor(seed=2026){this.seed=seed>>>0;this.time=0;this.nextSample=0;this.phaseAt=0;this.startAt=0;this.scEndAt=0;this.resumeType=null;this.phase='FORMATION_READY';this.flag='GREEN';this.paused=true;this.rate=4;this.totalLaps=CIRCUIT.laps;this.weather=0;this.events=[];this.documents=[];this.incidents=[];this.burn=94/(50*6000);this.liveWeather=true;this.cast={};this.isSprint=false;
+  this.weekend={format:formatFor(CIRCUIT.key),idx:0,results:{}};this.sc={on:false,dist:0,speed:0,state:null,queue:[]};this.wx={rain:0,target:0,at:150,lineDry:0};this.decisions=[];this.teamRadio=[];this.fiaRadio=[];this.messages=[];this.stewardsQueue=[];this.filed=false;this.samples=[];this.replay=[];this.snapshots={};this.triggers=new Set();this.gridClear=false;this.pitExit=false;this.lights=0;this.greenLaps=0;this.greenStreak=0;this.lastLeaderLap=0;this.scTime=0;this.scLap=null;this.unlapLap=null;this.unlapAt=0;this.returnOrders=[];this.result=null;this.suspension=null;this.recovery=null;this.scenario=1;this.campaign=true;this.cars=GRID2026.map(([id,name,code,teamId,pace,craft,cons],i)=>{
   const team=TEAMS.find(t=>t.id===teamId),second=GRID2026.findIndex(g=>g[2]===teamId)!==i;
   return{id,name,code,team:teamId,teamName:team.name,boxSlot:TEAMS.indexOf(team),boxU:.34+TEAMS.indexOf(team)*.030+(second?.012:0),
    colour:second?lighten(team.colour,.42):team.colour,
@@ -785,7 +797,7 @@ class RaceEngine{
    skill:.978+rate(pace)*.022,
    aggression:.22+rate(craft)*.68,
    steadiness:.35+rate(cons)*.65,
-   gridPos:i+1,qualLap:null,expected:i+1,pressure:0,pressureWhy:'',
+   gridPos:i+1,qualLap:null,expected:i+1,pressure:0,pressureWhy:'',setup:0,practiceLaps:0,practiceBest:null,suspended:false,gridPenalty:0,disqualified:false,
    tyre:1,tyreAge:0,compound:'MEDIUM',nextCompound:'HARD',usedCompounds:new Set(['MEDIUM']),
    plan:null,stintFrom:1,stopAt:0,pitRequested:false,
    ers:.8,fuel:100,brake:0,throttle:0,steer:0,heart:108,impact:0,intrusion:false,wing:2.3,plank:9.6,flow:0,
@@ -795,7 +807,7 @@ class RaceEngine{
    drs:false,drsArmed:false,mistakeUntil:0,lapAt:null,lapFrom:null,lapValid:false,lastDist:null,
    lastLap:null,bestLap:null,sectorAt:null,sectorIdx:null,radioAt:0,
    returnTo:null,restartAt:null,unlapTarget:null};
- });this.qualify();
+ });this.autoWeekend();
   /* The grid note and the pit-lane start belong to real grid slots. */
   const gridCar=this.cars[Math.min(this.cars.length-1,11)],pitCar=this.cars[this.cars.length-1];
   this.cast.grid=gridCar;this.cast.pitStart=pitCar;
@@ -983,11 +995,89 @@ class RaceEngine{
   c.chatAt=this.time;this._radioAt=this.time;
   for(const [who,text] of said)who?this.driver(c,text,true):this.pitWall(c,text,true);
  }
+ /* ------------------------------ THE WEEKEND -----------------------------
+    Sessions run in order. Practice is simulated - the interesting part is
+    what it leaves behind, which is set-up: a car that has run all three
+    practices is a few tenths better placed than one that has not, and a
+    driver who is good at it gets more out of it. */
+ sessionList(){return FORMATS[this.weekend.format];}
+ currentSession(){return this.sessionList()[this.weekend.idx]||null;}
+ runPractice(id){
+  const spec=SESSIONS[id];
+  const res=[];
+  for(const c of this.cars){
+   if(c.suspended)continue;
+   const gain=(.10+rate(c.rating.cons)*.14)*(spec.laps/16);
+   c.setup=Math.min(1,(c.setup||0)+gain);
+   c.practiceLaps=(c.practiceLaps||0)+spec.laps;
+   /* A representative best from the session, on a heavier car than qualifying. */
+   let best=1e9;
+   for(let k=0;k<3;k++){
+    const t=REFLAP/c.skill*1.012-(c.setup*.004*REFLAP)
+      +(this.random()+this.random()-1)*(.45+(1-c.steadiness)*1.1);
+    if(t<best)best=t;
+   }
+   c.practiceBest=best;
+   res.push({id:c.id,code:c.code,name:c.name,team:c.team,colour:c.colour,t:best,laps:c.practiceLaps});
+  }
+  res.sort((a,b)=>a.t-b.t);
+  this.weekend.results[id]=res;
+  this.rcm('SESSION',`${spec.name.toUpperCase()} - CLASSIFICATION PUBLISHED - FASTEST ${res[0].id} (${res[0].code})`);
+  return res;
+ }
+ runQualifying(id){
+  const spec=SESSIONS[id];
+  this.qualify(spec.forSprint);
+  this.weekend.results[id]=this.cars.filter(c=>!c.suspended).map(c=>({id:c.id,code:c.code,name:c.name,team:c.team,colour:c.colour,t:c.qualLap,pos:c.gridPos,out:c.knockedOut}));
+  this.weekend.idx++;
+  this.rcm('SESSION',`${spec.name.toUpperCase()} - GRID PUBLISHED - POLE ${this.cars[0].id} (${this.cars[0].code})`);
+  return this.weekend.results[id];
+ }
+ /* Boot straight to the first race of the weekend: the sessions before it
+    are run in order so their set-up work and their grid are real, rather
+    than a race that appears out of nowhere. */
+ autoWeekend(){
+  for(let guard=0;guard<12;guard++){
+   const id=this.currentSession();if(!id)break;
+   const spec=SESSIONS[id];
+   if(spec.kind==='race'){this.startRace(spec.forSprint);break;}
+   if(spec.kind==='practice'){this.runPractice(id);this.weekend.idx++;}
+   else this.runQualifying(id);
+  }
+ }
+ advance(){
+  const id=this.currentSession();
+  if(!id)return{ok:false,message:'The weekend is complete.'};
+  const spec=SESSIONS[id];
+  if(spec.kind==='practice'){this.runPractice(id);this.weekend.idx++;return{ok:true,message:`${spec.name} complete.`,view:id};}
+  if(spec.kind==='qualifying'){
+   this.runQualifying(id);
+   return{ok:true,message:`${spec.name} complete. ${this.tag(this.cars[0])} on pole.`,view:id};
+  }
+  /* A race is not simulated - it is the thing you are here to run. */
+  this.startRace(spec.forSprint);
+  return{ok:true,message:`${spec.name}: grid formed, ready for the formation lap.`};
+ }
+ startRace(isSprint){
+  this.isSprint=!!isSprint;this.raceSession=this.currentSession();
+  this.totalLaps=isSprint?Math.max(8,Math.round(100000/LENGTH)):CIRCUIT.laps;
+  this.phase='FORMATION_READY';this.phaseAt=this.time;this.paused=true;
+  this.flag='GREEN';this.gridClear=false;this.pitExit=false;this.lights=0;
+  this.cars.forEach((c,i)=>{
+   c.dist=-i*9;c.speed=0;c.lat=c.lane=(i%2?1:-1)*2.6;c.latV=0;
+   c.tyre=1;c.tyreAge=0;c.stops=0;c.lapAt=null;c.lapFrom=null;c.lapValid=false;
+   c.lastLap=null;c.bestLap=null;c.fuel=100;c.ers=.8;c.pitState=null;c.status=c.suspended?'RETIRED':'RUNNING';
+  });
+  this.burn=94/(this.totalLaps*LENGTH);
+  this.filed=false;this.result=null;
+  if(!isSprint)this.strategise();
+  else for(const c of this.cars){c.plan={two:false,stops:[]};c.compound='SOFT';c.usedCompounds=new Set(['SOFT']);}
+ }
  /* ------------------------------ QUALIFYING ------------------------------
     One flying lap each. Pace sets the time, and a driver who is less
     consistent has a wider spread and a real chance of a lap that never comes
     together - which is how a quick driver ends up starting from the back. */
- qualify(){
+ qualify(forSprint){
   /* Three parts, as the session is actually run: everyone in Q1 and the
      slowest five go out, fifteen in Q2 and five more go out, ten in Q3 for
      the pole. A driver carries their best time from the part they were
@@ -997,7 +1087,7 @@ class RaceEngine{
   for(let i=0;i<salt;i++)this.random();
   const lap=(c,part)=>{
    /* They go quicker as the session goes on: rubber, fuel and confidence. */
-   const base=REFLAP/c.skill*(1.0035-part*.0025);
+   const base=REFLAP/c.skill*(1.0035-part*.0025)-(c.setup||0)*.004*REFLAP;
    const spread=.30+(1-c.steadiness)*.95;
    const noise=(this.random()+this.random()-1)*spread;
    const scrappy=this.random()<(1-c.steadiness)*(part===1?.18:.12)?.5+this.random()*1.4:0;
@@ -1023,7 +1113,33 @@ class RaceEngine{
   /* Grid order: Q3 runners on their Q3 lap, then the Q2 fallers, then Q1. */
   const rank=c=>(c.knockedOut===1?2:c.knockedOut===2?1:0);
   this.cars.sort((a,b)=>rank(a)-rank(b)||a.qualLap-b.qualLap);
-  this.cars.forEach((c,i)=>{c.gridPos=i+1;c.dist=-i*9;c.lane=c.lat=(i%2?1:-1)*2.6;});
+  /* Anything carried in from the last round is applied here: a suspended
+     driver does not take part, and grid penalties drop a car down the order
+     the way the FIA applies them - after the times are set, in order. */
+  const drops=[];
+  for(const c of this.cars){
+   const L=ledgerFor(c.id);
+   c.suspended=!!L.suspended;c.gridPenalty=forSprint?0:(L.gridDrop||0);
+   if(c.gridPenalty)drops.push(c);
+  }
+  let grid=this.cars.filter(c=>!c.suspended);
+  const sat=this.cars.filter(c=>c.suspended);
+  for(const c of drops.filter(c=>!c.suspended)){
+   const at=grid.indexOf(c);
+   if(at<0)continue;
+   grid.splice(at,1);
+   grid.splice(Math.min(grid.length,at+c.gridPenalty),0,c);
+  }
+  this.cars=[...grid,...sat];
+  this.cars.forEach((c,i)=>{
+   c.gridPos=c.suspended?null:i+1;
+   c.dist=-i*9;c.lane=c.lat=(i%2?1:-1)*2.6;
+   if(c.suspended){c.status='RETIRED';c.speed=0;}
+  });
+  for(const c of this.cars){
+   if(c.suspended)this.doc('Notice · '+this.tag(c),`${c.name} is suspended for this event and takes no part.`,'NOTICE');
+   else if(c.gridPenalty)this.doc('Grid penalty · '+this.tag(c),`${c.gridPenalty} place grid penalty applied; starts P${c.gridPos}.`,'NOTICE');
+  }
   [...this.cars].sort((a,b)=>(b.rating.pace*2+b.rating.craft)-(a.rating.pace*2+a.rating.craft))
    .forEach((c,i)=>{c.expected=i+1;});
   this.pole=this.cars[0];
@@ -1139,14 +1255,22 @@ class RaceEngine{
  applyPenalty(c,kind,offence,points){
   const label={time5:'5 SECOND TIME PENALTY',time10:'10 SECOND TIME PENALTY',
    drivethrough:'DRIVE-THROUGH PENALTY',stopgo:'10 SECOND STOP-AND-GO PENALTY',
-   reprimand:'REPRIMAND'}[kind]||kind.toUpperCase();
+   reprimand:'REPRIMAND',grid3:'3 PLACE GRID PENALTY AT THE NEXT EVENT',
+   grid5:'5 PLACE GRID PENALTY AT THE NEXT EVENT',grid10:'10 PLACE GRID PENALTY AT THE NEXT EVENT',
+   dsq:'DISQUALIFIED'}[kind]||kind.toUpperCase();
   if(kind==='reprimand'){
-   c.reprimands=(c.reprimands||0)+1;
+   c.reprimands=(c.reprimands||0)+1;carryPenalty(c.id,'reprimand',1,offence);
+  }else if(kind.startsWith('grid')){
+   const places=+kind.slice(4);
+   c.gridPending=(c.gridPending||0)+places;
+   carryPenalty(c.id,'grid',places,offence);
+  }else if(kind==='dsq'){
+   c.status='RETIRED';c.speed=0;c.disqualified=true;
   }else{
    c.penalties.push({kind,seconds:kind==='time10'?10:kind==='time5'?5:0,served:false,time:this.time});
    if(kind==='drivethrough'||kind==='stopgo'){c.mustPitBy=this.lap+3;c.pitRequested=true;c.servingPenalty=kind;}
   }
-  if(points){c.licencePoints=(c.licencePoints||0)+points;}
+  if(points){c.licencePoints=(c.licencePoints||0)+points;carryPenalty(c.id,'points',points,offence);}
   c.cautionUntil=this.time+90;
   this.rcm('STEWARDS',`FIA STEWARDS: ${this.tag(c)} - ${label}${offence?' - '+offence:''}`,[c.id]);
   this.doc('Decision · '+this.tag(c),
@@ -1156,8 +1280,11 @@ class RaceEngine{
    +(kind==='drivethrough'?' The car must enter the pit lane and pass through without stopping within three laps.':'')
    +(kind==='stopgo'?' The car must stop in its box for ten seconds with no work carried out.':''),'DECISION');
   this.pitWall(c,`${label.toLowerCase()}. We will deal with it.`,true);
-  if(c.licencePoints>=12)this.doc('Notice · '+this.tag(c),
-   'Twelve penalty points reached within twelve months; the driver is suspended for the next event.','NOTICE');
+  const L=ledgerFor(c.id);
+  if(L.suspended)this.doc('Notice · '+this.tag(c),
+   `Twelve penalty points reached; ${c.name} is suspended for the next event and will not take part.`,'NOTICE');
+  if(L.gridDrop)this.doc('Notice · '+this.tag(c),
+   `${c.name} carries a ${L.gridDrop} place grid penalty into the next event.`,'NOTICE');
  }
 /* ------------------------------- FIA RADIO ------------------------------
     The director's own channel. Everything sent on it is on the record, and
@@ -1243,10 +1370,30 @@ class RaceEngine{
   return{ok:true,message:`${label} · ${action.replace(/^penalty/,'penalty ')}`};
  }
  /* A finished race is filed to the season standings once, and only once. */
+ /* Article 30.5m: a dry race must be run on two different dry compounds.
+    A car that finishes on one is disqualified from the result. */
+ enforceCompounds(){
+  if(this.isSprint||this.weather>.25)return;
+  for(const c of this.cars){
+   if(c.status==='RETIRED'||!c.usedCompounds)continue;
+   const dry=[...c.usedCompounds].filter(x=>x==='SOFT'||x==='MEDIUM'||x==='HARD');
+   if(dry.length<2){
+    c.disqualified=true;
+    this.rcm('STEWARDS',`FIA STEWARDS: ${this.tag(c)} - DISQUALIFIED - ONLY ONE DRY COMPOUND USED`,[c.id]);
+    this.doc('Decision · '+this.tag(c),`${c.name} used only one specification of dry tyre and is excluded from the race result.`,'DECISION');
+   }
+  }
+ }
  fileResult(){
   if(!this.result||this.filed)return;
   this.filed=true;
+  const cur=this.currentSession();
+  if(cur&&SESSIONS[cur].kind==='race')this.weekend.idx++;
+  /* A carried penalty is served once. The Grand Prix is the event it was
+     served at, so the drop and the suspension are cleared with the result. */
+  if(!this.isSprint)clearLedgerFlags();
   recordRace({circuit:CIRCUIT.key,round:roundOf(CIRCUIT.key),name:CIRCUIT.name,event:CIRCUIT.event,
+   sprint:!!this.isSprint,
    laps:this.result.completed,scheduled:this.totalLaps,band:this.result.band,
    at:Date.now(),
    rows:this.result.rows.map(r=>{const c=this.car(r.id);
@@ -1374,9 +1521,9 @@ class RaceEngine{
  if(action==='return'){const [ra,rb]=this.cast.apex||[];if(!ra||!rb)return deny('No position-return case is open.');if(ra.returnTo)return deny('Position-return instruction is already active.');const i=this.incidents.find(x=>x.type==='apex'&&x.status==='REVIEW');if(!i)return deny('No position-return case is open.');ra.returnTo=rb.id;this.returnOrders.push({car:ra.id,to:rb.id,deadline:ra.dist+LENGTH,incident:i.id});this.doc('Position return · Car 16','Return the advantage to Car 55 within one lap; unresolved case referred to stewards.');this.radio('RACE DIRECTOR','Instruct your driver to give the position back within 1 lap, or this goes to the Stewards as a 10-second penalty.');return say('That is the scenario referral recommendation; the stewards determine any penalty. Car 16, return the advantage safely.');}
  if(action==='dismiss'){const i=this.incidents.find(x=>x.id===Number(id));if(!i||i.status!=='REVIEW')return deny('This review has already been closed.');i.status='NO ACTION';this.doc('Review closed · '+i.title,'Operator reviewed the available evidence and recorded no further action.');return say('Review closed. Preserve the evidence.');}
  if(action==='standing'||action==='rolling'){if(this.phase!=='SUSPENDED')return deny('All cars must be stationary in the pit-lane queue.');if(this.weather>.48)return deny('Resumption refused: standing water or visibility remains unsuitable.');if(this.recovery&&!this.recovery.repaired)return deny('Circuit recovery is not complete.');this.resumeType=action;this.phase='RESUME_NOTICE';this.phaseAt=this.time;this.doc('Resumption notice',`${action} resumption assessed suitable. Gameplay compresses the normal preparation notice to 20 seconds.`);return say(`${action==='standing'?'Standing':'Rolling'} resumption selected after assessment. Twenty-second game preparation interval; the real-world notice is longer.`);}
- if(action==='finish'){if(this.phase!=='SUSPENDED')return deny('Suspend and assemble the cars in the pit lane before a non-resumption classification.');let ref=Math.max(0,this.suspension.lap-2);const snap=this.snapshots[ref];if(!snap)return deny('A complete timing snapshot for the countback lap is not available.');this.result=this.classify(snap,ref,this.suspension.completed,this.suspension.greenLaps);this.fileResult();this.phase='FINISHED';this.paused=true;this.doc('Provisional classification',`Non-resumption: signal lap ${this.suspension.lap}; retained lap ${ref}; distance ${this.suspension.completed}/${this.totalLaps}; ${this.result.band}. Technical reviews remain open.`,'RESULT');return say(`The race will not resume. Publish the provisional classification at lap ${ref}. ${this.result.band}.`);}
+ if(action==='finish'){if(this.phase!=='SUSPENDED')return deny('Suspend and assemble the cars in the pit lane before a non-resumption classification.');let ref=Math.max(0,this.suspension.lap-2);const snap=this.snapshots[ref];if(!snap)return deny('A complete timing snapshot for the countback lap is not available.');this.result=this.classify(snap,ref,this.suspension.completed,this.suspension.greenLaps);this.enforceCompounds();this.fileResult();this.phase='FINISHED';this.paused=true;this.doc('Provisional classification',`Non-resumption: signal lap ${this.suspension.lap}; retained lap ${ref}; distance ${this.suspension.completed}/${this.totalLaps}; ${this.result.band}. Technical reviews remain open.`,'RESULT');return say(`The race will not resume. Publish the provisional classification at lap ${ref}. ${this.result.band}.`);}
  return deny('Command is not available in this state.');}
- classify(snapshot,ref,completed,green){const p=pointsFor(completed,this.totalLaps,green);const leaderDistance=Math.max(...snapshot.map(x=>x.dist));let list=snapshot.map((s,i)=>{const c=this.car(s.id),owed=c.penalties.filter(x=>!x.served).reduce((a,x)=>a+x.seconds,0),laps=s.status==='RETIRED'?Math.floor(Math.max(0,s.dist)/LENGTH):Math.max(0,ref-Math.floor(Math.max(0,leaderDistance-s.dist)/LENGTH)),classified=laps>=Math.floor(ref*.9);return {...s,name:c.name,color:c.color,owed,laps,classified,score:s.dist-owed*70};}).sort((a,b)=>b.score-a.score);let place=0;list=list.map(x=>({...x,position:x.classified?++place:null,points:x.classified?(p.points[place-1]??0):0}));return{rows:list,lap:ref,completed,percentage:completed/this.totalLaps*100,band:p.band,technicalPending:this.incidents.some(i=>i.type==='wing'&&i.status!=='NO ACTION')};}
+ classify(snapshot,ref,completed,green){const p=pointsFor(completed,this.totalLaps,green,this.isSprint);const leaderDistance=Math.max(...snapshot.map(x=>x.dist));let list=snapshot.map((s,i)=>{const c=this.car(s.id),owed=c.penalties.filter(x=>!x.served).reduce((a,x)=>a+x.seconds,0),laps=s.status==='RETIRED'?Math.floor(Math.max(0,s.dist)/LENGTH):Math.max(0,ref-Math.floor(Math.max(0,leaderDistance-s.dist)/LENGTH)),classified=laps>=Math.floor(ref*.9);return {...s,name:c.name,color:c.color,owed,laps,classified:classified&&!c.disqualified,dsq:!!c.disqualified,score:s.dist-owed*70};}).sort((a,b)=>b.score-a.score);let place=0;list=list.map(x=>({...x,position:x.classified?++place:null,points:x.classified?(p.points[place-1]??0):0}));return{rows:list,lap:ref,completed,percentage:completed/this.totalLaps*100,band:p.band,technicalPending:this.incidents.some(i=>i.type==='wing'&&i.status!=='NO ACTION')};}
  inject(n){if(this.triggers.has(n))return;this.triggers.add(n);this.scenario=n;if(n===2){
   const [a,b]=this.pairInBattle();
   this.cast.release=[a,b];this.cast.wing=a;
@@ -1431,7 +1578,7 @@ class RaceEngine{
  step(dt){if(this.paused||this.phase==='FINISHED')return;dt=Math.min(dt,.25);this.time+=dt;
  if(this.recovery){const r=this.recovery;if(r.medicalAt!=null&&!r.medicalClear&&this.time-r.medicalAt>45){r.medicalClear=true;this.radio('CHIEF MEDICAL OFFICER (CMO)','Driver transferred to medical care. Work area released to recovery; assessment continues.');}if(r.repairAt!=null&&!r.repaired&&this.time-r.repairAt>75){r.repaired=true;this.radio('DEPUTY DIRECTOR / MARSHAL LEAD','Barrier repair inspected. Vehicle, debris, tools and all personnel clear. Circuit released.');this.doc('Circuit release','Barrier inspected and all personnel clear of the protected work zone.');}}
  if(this.phase==='FORMATION'){this.cars.forEach((c,i)=>{if(c.id!==45){c.dist=(this.time-this.phaseAt)/22*LENGTH-i*11;c.speed=LENGTH/22;}});if(this.time-this.phaseAt>=22){this.phase='GRID';this.cars.forEach((c,i)=>{c.dist=-i*9;c.speed=0;c.lat=c.lane=(i%2?1:-1)*2.6;c.latV=0;});this.radio('DEPUTY DIRECTOR / MARSHAL LEAD',`Grid formed. ${this.cast.grid?this.tag(this.cast.grid):'One car'} requires final alignment verification.`);}this.record();return;}
- if(this.phase==='LIGHTS'){this.lights=Math.min(5,1+Math.floor(this.time-this.phaseAt));if(this.time-this.phaseAt>6.4){this.phase='RACING';this.startAt=this.time;this.lights=0;this.strategise();this.doc('Race start','Five lights extinguished. Start transponder data retained.');this.radio('RACE DIRECTOR','Lights out. Race underway. Pit exit remains held until the field clears.');}return;}
+ if(this.phase==='LIGHTS'){this.lights=Math.min(5,1+Math.floor(this.time-this.phaseAt));if(this.time-this.phaseAt>6.4){this.phase='RACING';this.startAt=this.time;this.lights=0;if(!this.isSprint)this.strategise();this.doc('Race start','Five lights extinguished. Start transponder data retained.');this.radio('RACE DIRECTOR','Lights out. Race underway. Pit exit remains held until the field clears.');}return;}
  if(['FORMATION_READY','GRID','SUSPENDED'].includes(this.phase))return;
  if(this.phase==='RESUME_NOTICE'){if(this.time-this.phaseAt>=20){this.flag=this.resumeType==='rolling'?'SC':'GREEN';this.phase=this.resumeType==='rolling'?'SC_RESTART':'LIGHTS';this.phaseAt=this.time;/* The field forms up in classification order on the leader's lap, the way
     a stopped race resumes. Placing each car at the start of its own lap
@@ -1480,7 +1627,7 @@ class RaceEngine{
  const onLine=1-Math.min(1,Math.abs(c.lat/USABLE-ideal));
  const water=clamp(this.weather*(1-this.wx.lineDry*.62*onLine),0,1);
  c.water=water;
- const grip=RACEPACE*tyre.pace*wetGrip(c.compound,water)*c.skill*fuelGain
+ const grip=RACEPACE*tyre.pace*wetGrip(c.compound,water)*c.skill*(1+(c.setup||0)*.004)*fuelGain
   *(.94+.06*c.tyre)*(1+c.pressure*.004)*(c.mistakeUntil>this.time?.87:1);
  const offLine=Math.abs(c.lat/USABLE-ideal);
  let target=pace*grip*(1-.06*offLine*(1-this.weather*.85));
@@ -1722,7 +1869,7 @@ class RaceEngine{
  if(this.phase==='SC_RESTART'&&this.leader.dist>=this.scEndAt){this.flag='GREEN';this.phase='RACING';this.unlapLap=null;this.radio('RACE DIRECTOR','Green at the line. Each car remains restricted until its own crossing.');}
 
  for(const o of [...this.returnOrders]){const c=this.car(o.car);if(c.dist>o.deadline){c.returnTo=null;this.returnOrders=this.returnOrders.filter(x=>x!==o);this.doc('Unresolved advantage referred',`Car ${c.id} did not complete the position return within one lap. Ten-second scenario recommendation referred; a stewards decision is still required.`,'REFERRAL');this.radio('RACE DIRECTOR',`Car ${c.id} missed the return deadline. Refer to the stewards with the ten-second scenario recommendation.`);}}
- const completed=Math.floor(Math.max(0,this.leader.dist)/LENGTH);if(completed>this.lastLeaderLap){for(let k=this.lastLeaderLap+1;k<=completed;k++)this.snapshots[k]=this.order().map(c=>({id:c.id,dist:c.dist,status:c.status}));this.lastLeaderLap=completed;if(this.flag==='GREEN'){this.greenStreak++;this.greenLaps=Math.max(this.greenLaps,this.greenStreak);}else this.greenStreak=0;if(completed>=this.totalLaps&&this.phase==='RACING'){this.result=this.classify(this.snapshots[completed],completed,completed,this.greenLaps);this.fileResult();this.phase='FINISHED';this.paused=true;this.doc('Provisional race classification','Scheduled distance completed. Outstanding penalties applied; technical review remains separate.','RESULT');this.radio('RACE DIRECTOR','Chequered flag. Race distance complete.');}}
+ const completed=Math.floor(Math.max(0,this.leader.dist)/LENGTH);if(completed>this.lastLeaderLap){for(let k=this.lastLeaderLap+1;k<=completed;k++)this.snapshots[k]=this.order().map(c=>({id:c.id,dist:c.dist,status:c.status}));this.lastLeaderLap=completed;if(this.flag==='GREEN'){this.greenStreak++;this.greenLaps=Math.max(this.greenLaps,this.greenStreak);}else this.greenStreak=0;if(completed>=this.totalLaps&&this.phase==='RACING'){this.result=this.classify(this.snapshots[completed],completed,completed,this.greenLaps);this.enforceCompounds();this.fileResult();this.phase='FINISHED';this.paused=true;this.doc('Provisional race classification','Scheduled distance completed. Outstanding penalties applied; technical review remains separate.','RESULT');this.radio('RACE DIRECTOR','Chequered flag. Race distance complete.');}}
  if(this.campaign&&this.phase==='RACING'){for(const[n,lap]of[[2,12],[3,19],[4,31],[5,47]])if(this.lap>=lap)this.inject(n);}
  this.record();}
  record(){if(!this.nextSample||this.time>=this.nextSample){this.nextSample=this.time+.5;for(const c of this.cars){c.history.push({speed:c.speed*3.6,brake:c.brake,throttle:c.throttle,steer:c.steer,ers:c.decision==='Attack'?250:90});if(c.history.length>70)c.history.shift();}this.replay.push({time:this.time,cars:this.cars.map(c=>({id:c.id,name:c.name,dist:c.dist,lane:c.lane,heading:c.heading,color:c.color,status:c.status,pitState:c.pitState})),flag:this.flag});if(this.replay.length>160)this.replay.shift();}}
@@ -1876,15 +2023,56 @@ const SCRIPT={
    round, so the championship reads as a season rather than a pile. */
 const CALENDAR=['jeddah','miami','monaco','silverstone','zandvoort','cota','interlagos','vegas'];
 const roundOf=key=>CALENDAR.indexOf(key)+1;
+/* THE WEEKEND
+   A Grand Prix weekend is three practices, qualifying and the race. A sprint
+   weekend trades two of the practices for a sprint and its own qualifying,
+   which is the format the sprint rounds actually run. */
+const SESSIONS={
+ FP1:{name:'Practice 1',kind:'practice',laps:15},
+ FP2:{name:'Practice 2',kind:'practice',laps:18},
+ FP3:{name:'Practice 3',kind:'practice',laps:13},
+ SQ:{name:'Sprint Qualifying',kind:'qualifying',forSprint:true},
+ SPRINT:{name:'Sprint',kind:'race',forSprint:true},
+ Q:{name:'Qualifying',kind:'qualifying'},
+ RACE:{name:'Grand Prix',kind:'race'}
+};
+const FORMATS={
+ normal:['FP1','FP2','FP3','Q','RACE'],
+ sprint:['FP1','SQ','SPRINT','Q','RACE']
+};
+/* The rounds that run the sprint format. */
+const SPRINT_ROUNDS=['miami','cota','interlagos'];
+const formatFor=key=>SPRINT_ROUNDS.includes(key)?'sprint':'normal';
 const SEASON_KEY='aegis-season-v1';
-let season={races:[]};
+let season={races:[],ledger:{}};
 try{const raw=localStorage.getItem(SEASON_KEY);if(raw)season=JSON.parse(raw)||{races:[]};}catch(e){}
-if(!season||!Array.isArray(season.races))season={races:[]};
+if(!season||!Array.isArray(season.races))season={races:[],ledger:{}};
+if(!season.ledger)season.ledger={};
+/* What a driver carries into the next round: places to drop on the grid, and
+   whether they are sitting this one out. Twelve penalty points on the Super
+   Licence is a one-event suspension; five reprimands is a ten-place drop. */
+function ledgerFor(id){return season.ledger[id]||(season.ledger[id]={points:0,reprimands:0,gridDrop:0,suspended:false});}
+function carryPenalty(id,kind,amount,why){
+ if(!id&&id!==0)return;
+ const L=ledgerFor(id);
+ if(kind==='grid')L.gridDrop+=amount;
+ if(kind==='points'){
+  L.points+=amount;
+  if(L.points>=12){L.points-=12;L.suspended=true;L.why='twelve penalty points';}
+ }
+ if(kind==='reprimand'){
+  L.reprimands+=amount;
+  if(L.reprimands>=5){L.reprimands-=5;L.gridDrop+=10;L.why='five reprimands';}
+ }
+ if(why)L.lastWhy=why;
+ saveSeason();
+}
+function clearLedgerFlags(){for(const k in season.ledger){const L=season.ledger[k];L.gridDrop=0;L.suspended=false;}saveSeason();}
 function saveSeason(){try{localStorage.setItem(SEASON_KEY,JSON.stringify(season));}catch(e){}}
 function recordRace(race){
- const at=season.races.findIndex(r=>r.circuit===race.circuit);
+ const at=season.races.findIndex(r=>r.circuit===race.circuit&&!!r.sprint===!!race.sprint);
  if(at>=0)season.races[at]=race; else season.races.push(race);
- season.races.sort((a,b)=>(a.round||99)-(b.round||99));
+ season.races.sort((a,b)=>(a.round||99)-(b.round||99)||(a.sprint?0:1)-(b.sprint?0:1));
  saveSeason();
 }
 function standings(){
@@ -2154,7 +2342,7 @@ function telemetry(){const a=sim.car(selected),b=sim.car(compare);$('#metrics').
   :`<span>Settled</span><i style="width:${Math.round(a.pressure*100)}%"></i><b>${Math.round(a.pressure*100)}%</b><em>Racing to its own plan.</em>`;$('#utilities').innerHTML='<div class="utilities">'+a.candidates.slice(0,4).map(x=>`<div class="utility">${x.action} ${x.score.toFixed(2)}<meter value="${x.score}" min="0" max="2"></meter></div>`).join('')+'</div>';}
 function operations(){let title='Monitor the race',copy='Drivers make their own racing and pit decisions. Review StewardAI evidence before issuing a decision.',action='review',button='Review next incident';const unresolved=sim.incidents.find(i=>i.status==='REVIEW');let disabled=false;
  if(sim.phase==='FORMATION_READY'){title='Begin formation';copy=`${sim.cast.grid?'Car '+sim.cast.grid.id+' ('+sim.cast.grid.code+')':'One car'} needs grid verification. ${sim.cast.pitStart?'Car '+sim.cast.pitStart.id+' ('+sim.cast.pitStart.code+')':'One car'} has anti-stall and remains in the pit lane.`;action='formation';button='Begin formation lap';}else if(sim.phase==='FORMATION'){title='Formation lap underway';copy=`Track the field as it returns to the grid. ${sim.cast.pitStart?'Car '+sim.cast.pitStart.id:'The held car'} remains at the red pit exit.`;button='Field forming';disabled=true;}else if(sim.phase==='GRID'){title=sim.gridClear?'Grid verified':'Verify Car 12';copy=sim.gridClear?'The field is stationary. Arm the five-light sequence.':'Review the grid-box camera and reposition Car 12 before the start.';action=sim.gridClear?'lights':'grid';button=sim.gridClear?'Arm grid lights':'Verify Car 12';}else if(sim.phase==='LIGHTS'){title='Start sequence';copy='Five red lights. Start-sensor evidence is retained at lights out.';button='Sequence running';disabled=true;}else if(sim.phase==='RED_RETURN'){title='Return to the pit lane';copy='No overtaking. Wait for every running car to form the fast-lane queue.';button='Await queue confirmation';disabled=true;}else if(sim.phase==='SUSPENDED'){title='Race suspended';copy='Assess water, visibility and circuit condition before choosing resumption. The no-resumption action calculates countback.';action='finish';button='No resumption / classify';}else if(sim.phase==='RESUME_NOTICE'){title='Resumption notice';copy=`${Math.max(0,Math.ceil(20-(sim.time-sim.phaseAt)))} seconds of compressed preparation remain.`;button='Preparation underway';disabled=true;}else if(sim.phase==='FINISHED'){title='Provisional classification';copy='Review the retained lap, outstanding time penalties and points. Technical findings remain separate.';action='results';button='View results';}else if(sim.recovery&&!sim.recovery.repaired){const r=sim.recovery;if(!['SC','RED'].includes(sim.flag)){title='Protect Sector 2';copy='Car 27: 28 G impact. The CMO requests Medical Car dispatch.';action='SC';button='Deploy full Safety Car';}else if(r.medicalAt==null){title='Dispatch Medical Car';copy='The field is neutralised. Release the Medical Car on the protected route.';action='medical';button='Dispatch medical';}else if(!r.medicalClear){title='Medical response underway';copy=`The work area remains with the CMO. Approx. ${Math.max(0,Math.ceil(45-(sim.time-r.medicalAt)))} simulation seconds to the next report.`;button='Await CMO clearance';disabled=true;}else if(r.repairAt==null){title='Authorise recovery';copy='CMO has cleared the work area. Barrier repair and debris removal can begin.';action='repair';button='Authorise repair';}else{title='Barrier repair in progress';copy=`Inspection and personnel clearance pending. Approx. ${Math.max(0,Math.ceil(75-(sim.time-r.repairAt)))} simulation seconds.`;button='Await circuit release';disabled=true;}}else if(sim.flag==='SC'&&sim.phase!=='SC_RESTART'){title='Prepare Safety Car withdrawal';copy=sim.unlapLap==null?'When the queue is formed, release every eligible lapped car.':`Unlapping message sent on lap ${sim.unlapLap}. Wait for the following lap and all authorised passes.`;action=sim.unlapLap==null?'unlap':'scin';button=sim.unlapLap==null?'Unlap eligible cars':'SC in this lap';}else if(sim.phase==='SC_RESTART'){title='Rolling restart';copy='Leader controls the pace. Racing resumes for each driver at their own line crossing.';button='Monitor the restart';disabled=true;}else if(sim.car(41).pitState==='HOLD'&&!sim.pitExit){title='Release pit starter';copy='Open the pit exit after the start field has passed the exit.';action='pit';button='Pit exit green';}else if(unresolved){title=unresolved.title;copy=unresolved.evidence;button='Review evidence';}else{button='No open incident';disabled=true;}
- $('#next-title').textContent=title;$('#next-copy').textContent=copy;$('#next').textContent=button;$('#next').dataset.command=action;$('#next').disabled=disabled;const r=sim.recovery;$('#recovery-state').textContent=r?r.repaired?'Barrier inspected · personnel clear':r.medicalClear?'Medical area released · barrier work pending':r.medicalAt!=null?'Medical team on scene':'28 G alert · dispatch requested':'Medical cover available · circuit clear';$('#incidents').innerHTML=sim.incidents.filter(i=>i.status==='REVIEW'||i.status==='POST-RACE').map(i=>`<button class="incident" data-incident="${i.id}"><strong>${esc(i.title)}</strong><span>${esc(i.note||i.status)} · L${i.lap} · ${clock(i.time)}</span></button>`).join('')||'<p class="empty">No open sporting reviews. Track limits, starts and pit-line sensors remain armed.</p>';$('#alert-count').textContent=sim.incidents.filter(i=>i.status==='REVIEW').length||'';$('#race-count').textContent=season.races.length;$('#document-count').textContent=sim.documents.length;$('#water').textContent=sim.weather<.1?'Dry':`${(sim.weather*14).toFixed(1)} mm · ${sim.weather>.7?'severe':'wet'}`;if(document.activeElement!==$('#weather'))$('#weather').value=Math.round(sim.weather*100);}
+ $('#next-title').textContent=title;$('#next-copy').textContent=copy;$('#next').textContent=button;$('#next').dataset.command=action;$('#next').disabled=disabled;const r=sim.recovery;$('#recovery-state').textContent=r?r.repaired?'Barrier inspected · personnel clear':r.medicalClear?'Medical area released · barrier work pending':r.medicalAt!=null?'Medical team on scene':'28 G alert · dispatch requested':'Medical cover available · circuit clear';$('#incidents').innerHTML=sim.incidents.filter(i=>i.status==='REVIEW'||i.status==='POST-RACE').map(i=>`<button class="incident" data-incident="${i.id}"><strong>${esc(i.title)}</strong><span>${esc(i.note||i.status)} · L${i.lap} · ${clock(i.time)}</span></button>`).join('')||'<p class="empty">No open sporting reviews. Track limits, starts and pit-line sensors remain armed.</p>';$('#alert-count').textContent=sim.incidents.filter(i=>i.status==='REVIEW').length||'';$('#race-count').textContent=season.races.length;weekendStrip();$('#document-count').textContent=sim.documents.length;$('#water').textContent=sim.weather<.1?'Dry':`${(sim.weather*14).toFixed(1)} mm · ${sim.weather>.7?'severe':'wet'}`;if(document.activeElement!==$('#weather'))$('#weather').value=Math.round(sim.weather*100);}
 function comms(){
  const pick=$('#team-filter').value;
  let html;
@@ -2189,6 +2377,41 @@ function render(){const flagColor={GREEN:'#1F7A4D',YELLOW:'#8A7400',VSC:'#DD6E12
   +(rain>.5?' · heavy rain':rain>.12?' · raining':w>.05&&sim.wx.lineDry>.2?' · line drying':'');
  if(!$('#weather').matches(':active'))$('#weather').value=Math.round(w*100);radar();timing();cornerView();pitView();telemetry();operations();comms();}
 function toast(message){$('#toast').textContent=message;$('#toast').style.display='block';toastUntil=performance.now()+6500;}
+/* The weekend strip: every session of the format, what has been run and
+   what is next. A finished session is clickable and shows its sheet. */
+function weekendStrip(){
+ const w=sim.weekend,list=sim.sessionList(),cur=sim.currentSession();
+ $('#wk-label').textContent=(w.format==='sprint'?'SPRINT WEEKEND':'GRAND PRIX WEEKEND')+' · '+CIRCUIT.name.toUpperCase();
+ $('#wk-strip').innerHTML=list.map((id,i)=>{
+  const done=i<w.idx,now=id===cur;
+  return `<button class="${done?'done':now?'now':''}" data-session="${id}" ${done?'':'disabled'}>${esc(id)}</button>`;
+ }).join('');
+ const btn=$('#run-session'),spec=cur?SESSIONS[cur]:null;
+ if(!spec){btn.disabled=true;btn.textContent='Weekend complete';$('#wk-note').textContent='Every session has been run. Choose another circuit for the next round.';}
+ else if(spec.kind==='race'){
+  const started=sim.raceSession===cur;
+  btn.disabled=started;
+  btn.textContent=started?spec.name+' in progress':'Form up for the '+spec.name;
+  $('#wk-note').textContent=started?`${spec.name} is the session you run yourself, on the console below.`
+   :`${spec.name}: ${sim.totalLaps} laps once the grid forms.`;
+ }else{
+  btn.disabled=false;btn.textContent='Run '+spec.name;
+  $('#wk-note').textContent=spec.kind==='practice'?`${spec.laps} laps. Practice buys set-up, which is worth a couple of tenths.`:'Three parts, and it sets the grid.';
+ }
+}
+function sessionSheet(id){
+ const rows=sim.weekend.results[id],spec=SESSIONS[id];
+ if(!rows||!rows.length)return toast('That session has not been run.');
+ const tCol=t=>(TEAMS.find(x=>x.id===t)||{colour:'#75736A'}).colour;
+ const best=rows[0].t;
+ const body=rows.map((r,i)=>`<tr><td>${r.pos??i+1}</td>`
+  +`<td><span style="color:${tCol(r.team)}">${r.id}</span> ${esc(r.name)}</td>`
+  +`<td>${laptime(r.t)}</td><td>${i?'+'+(r.t-best).toFixed(3):'—'}</td>`
+  +`<td>${r.laps!=null?r.laps:(r.out?'Q'+r.out:'Q3')}</td></tr>`).join('');
+ modal(spec.name+' · '+CIRCUIT.name,
+  `<p class="legend">${esc(CIRCUIT.event)} · reference ${laptime(REFLAP)}</p>`
+  +`<table class="result-table"><thead><tr><th>Pos</th><th>Driver</th><th>Time</th><th>Gap</th><th>${spec.kind==='practice'?'Laps':'Out in'}</th></tr></thead><tbody>${body}</tbody></table>`);
+}
 function modal(title,body){$('#modal-title').textContent=title;$('#modal-body').innerHTML=body;if(!$('#modal').open)$('#modal').showModal();}
 /* Wind an incident back and look at it from corner-cam distance. The frames
    are the ones the simulator already keeps, so this is the race as it ran,
@@ -2261,7 +2484,7 @@ function championship(){
  const st=standings(),races=season.races;
  const tName=id=>(TEAMS.find(t=>t.id===id)||{name:id}).name;
  const tCol=id=>(TEAMS.find(t=>t.id===id)||{colour:'#75736A'}).colour;
- const head=races.map(r=>`<th title="${esc(r.name)}">${esc(r.circuit.slice(0,3).toUpperCase())}</th>`).join('');
+ const head=races.map(r=>`<th title="${esc(r.name)}${r.sprint?' sprint':''}">${esc(r.circuit.slice(0,3).toUpperCase())}${r.sprint?'<sup>S</sup>':''}</th>`).join('');
  const body=st.drivers.map((d,i)=>`<tr><td>${i+1}</td>`
   +`<td><span style="color:${tCol(d.team)}">${d.id}</span> ${esc(d.name)}</td>`
   +`<td>${esc(tName(d.team))}</td>`
@@ -2270,21 +2493,21 @@ function championship(){
   +`<td><b>${d.points}</b></td></tr>`).join('');
  modal('Championship standings',
   (races.length?'':'<p class="empty">No race has been classified yet. Finish a race — or use the weather scenario and the no-resumption countback — and it will be filed here.</p>')
-  +`<p class="legend">${races.length} of ${CALENDAR.length} rounds filed · championship points use the FIA distance bands the classification applies · PEN is Super Licence penalty points, twelve of which means a one-event suspension</p>`
+  +`<p class="legend">${races.filter(r=>!r.sprint).length} of ${CALENDAR.length} rounds filed · championship points use the FIA distance bands the classification applies · PEN is Super Licence penalty points, twelve of which means a one-event suspension</p>`
   +(races.length?`<h3>Drivers</h3><div style="overflow-x:auto"><table class="result-table"><thead><tr><th>Pos</th><th>Driver</th><th>Team</th>${head}<th title="Super Licence penalty points">Pen</th><th>Pts</th></tr></thead><tbody>${body}</tbody></table></div>`
    +`<h3>Constructors</h3><table class="result-table"><thead><tr><th>Pos</th><th>Team</th><th>Pts</th></tr></thead><tbody>`
    +st.teams.map((t,i)=>`<tr><td>${i+1}</td><td><span style="color:${tCol(t.id)}">■</span> ${esc(tName(t.id))}</td><td><b>${t.points}</b></td></tr>`).join('')
    +`</tbody></table><h3>Calendar</h3><table class="result-table"><thead><tr><th>Rd</th><th>Event</th><th>Laps</th><th>Winner</th></tr></thead><tbody>`
    +CALENDAR.map((key,i)=>{
-     const r=races.find(x=>x.circuit===key);
+     const r=races.find(x=>x.circuit===key&&!x.sprint),sp=races.find(x=>x.circuit===key&&x.sprint);
      const spec=CIRCUITS[key], w=r&&r.rows.find(x=>x.position===1);
-     return `<tr class="${r?'':'unrun'}"><td>${i+1}</td><td>${esc(spec.event)}</td>`
+     return `<tr class="${r?'':'unrun'}"><td>${i+1}</td><td>${esc(spec.event)}${formatFor(key)==='sprint'?` <span class="legend">sprint${sp?' run':''}</span>`:''}</td>`
       +`<td>${r?r.laps+'/'+r.scheduled:'—'}</td><td>${w?w.id+' '+esc(w.name):(r?'—':'not yet run')}</td></tr>`;}).join('')
    +`</tbody></table>`:'')
   +`<div class="modal-actions"><button id="export-season">Download season JSON</button>`
   +(races.length?`<button id="clear-season">Clear season</button>`:'')+`</div>`);
 }
-function results(){if(!sim.result)return toast('No classification has been generated yet.');const r=sim.result;modal('Provisional classification',`<p>Retained lap <b>${r.lap}</b> · Distance at final signal <b>${r.completed}/${sim.totalLaps} (${r.percentage.toFixed(2)}%)</b> · ${r.band}</p><p class="legend">${r.technicalPending?'Technical review pending. ':''}Unserved time penalties are included using the game timing model. Cars below the classification-distance requirement are marked NC.</p><table class="result-table"><thead><tr><th>Pos</th><th>Car / Driver</th><th>Laps</th><th>Unserved</th><th>Pts</th></tr></thead><tbody>${r.rows.map(c=>`<tr><td>${c.position??'NC'}</td><td><span style="color:${c.color}">${c.id}</span> ${c.name}</td><td>${c.laps}</td><td>${c.owed?c.owed+'s':'—'}</td><td>${c.points}</td></tr>`).join('')}</tbody></table><div class="modal-actions"><button id="download-results">Download results JSON</button></div>`);}
+function results(){if(!sim.result)return toast('No classification has been generated yet.');const r=sim.result;modal('Provisional classification',`<p>Retained lap <b>${r.lap}</b> · Distance at final signal <b>${r.completed}/${sim.totalLaps} (${r.percentage.toFixed(2)}%)</b> · ${r.band}</p><p class="legend">${r.technicalPending?'Technical review pending. ':''}Unserved time penalties are included using the game timing model. Cars below the classification-distance requirement are marked NC.</p><table class="result-table"><thead><tr><th>Pos</th><th>Car / Driver</th><th>Laps</th><th>Unserved</th><th>Pts</th></tr></thead><tbody>${r.rows.map(c=>`<tr><td>${c.dsq?'DSQ':(c.position??'NC')}</td><td><span style="color:${c.color}">${c.id}</span> ${c.name}</td><td>${c.laps}</td><td>${c.owed?c.owed+'s':'—'}</td><td>${c.points}</td></tr>`).join('')}</tbody></table><div class="modal-actions"><button id="download-results">Download results JSON</button></div>`);}
 document.addEventListener('click',e=>{const car=e.target.closest('[data-car]');if(car){selected=Number(car.dataset.car);$('#car-select').value=selected;render();}const tab=e.target.closest('[data-tab]');if(tab){$('.deck').dataset.view=tab.dataset.tab;document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b===tab));}const i=e.target.closest('[data-incident]');if(i)review(i.dataset.incident);const dismiss=e.target.closest('[data-dismiss]');if(dismiss){const r=sim.command('dismiss',dismiss.dataset.dismiss);toast(r.message);$('#modal').close();render();}const cmd=e.target.closest('[data-command]');if(cmd){const a=cmd.dataset.command;if(a==='review')review();else if(a==='results')results();else{const r=sim.command(a,16);toast(r.message);if(r.ok&&$('#modal').open)$('#modal').close();if(a==='finish'&&r.ok)results();render();}}if(e.target.id==='export-season')download('aegis-season.json',JSON.stringify(season,null,2),'application/json');
  if(e.target.id==='clear-season'){season={races:[]};saveSeason();championship();toast('Season cleared.');}
  if(e.target.id==='download-script')download('race-control-production-script.txt',scriptText());if(e.target.id==='download-results')download('race-control-results.json',JSON.stringify({result:sim.result,documents:sim.documents},null,2),'application/json');});
@@ -2311,6 +2534,10 @@ $('#wx-auto').onclick=()=>{
 <li><b>Silverstone</b> — 5.891 km, 18 corners, 52 laps, two DRS zones. Reference lap <b>1:27.4</b> at 243 km/h against Verstappen's 1:27.097 record. Its character falls out of the geometry: flat through Copse and the Maggotts-Becketts sequence, and hard on the brakes for Village, Brooklands and Luffield, which at 96 km/h is the slowest corner either circuit has.</li></ul>
 <h3>The grid</h3><p>The 2026 field: eleven teams and twenty-two cars with their real numbers and drivers, the second car of each team in a lighter shade of the team colour. Skill and aggression are drawn per driver, so the order that emerges is the simulator's, not a prediction.</p>
 <h3>The drivers</h3><p>Each of the twenty-two carries three ratings on a 0-100 scale where 100 is the best on this grid: <b>pace</b> for one-lap speed, <b>racecraft</b> for how hard they will fight for a position, and <b>consistency</b> for how often they put a wheel wrong when pushed. Verstappen is the benchmark at 99/96/94; Alonso's racecraft is the highest on the grid at 97 with less outright pace; Stroll sits at 79/75/77 and Lindblad, the rookie, has the lowest consistency of anyone. Pace spreads the field by a little over two per cent, about what separates the quickest and slowest laps of a real one. The ratings are a judgement on recent form, not a measurement — they are the one part of this simulator that is an opinion.</p>
+<h3>The weekend</h3><p>A round is run as a weekend, not as a race on its own. The strip at the top of the console is the format: three practices, qualifying and the Grand Prix at most circuits, and at Miami, Austin and Interlagos a sprint format that trades two practices for sprint qualifying and the sprint itself. Sessions run in order, and a session that has been run can be clicked open for its sheet.</p>
+<p>Practice is simulated, and what it leaves behind is set-up: a car that has run all three sessions is a couple of tenths better placed for qualifying and has a little more grip in the race, and a driver who is good at working with the car gets more out of it. Qualifying sets the grid. The races are the sessions you run yourself. The sprint is a hundred kilometres, one set of tyres, no mandatory stop and eight points down to eighth; the Grand Prix is the full distance with its own strategies and its own points.</p>
+<h3>Penalties that follow the driver</h3><p>Not every penalty is served in the race it was given in. Super Licence penalty points accumulate across the season, and the twelfth means a one-event suspension: the driver takes no part in the next weekend and the grid closes up. Five reprimands is a ten-place grid drop. Grid penalties are applied the way the FIA applies them, after the times are set and in order down the classification, so a car that qualified fourth with a five-place penalty starts ninth. Each of these is served once, at the Grand Prix, and cleared with the result.</p>
+<p>The two-compound rule is enforced too: in a dry Grand Prix a car that ran only one specification of dry tyre is excluded from the classification. It does not apply to the sprint, or to a race run in the wet.</p>
 <h3>Qualifying</h3><p>Three parts, as the session is run: everyone in Q1 and the slowest five go out, fifteen in Q2 and five more go out, ten in Q3 for pole. Times come down through the session as the rubber goes down. Pace sets the lap; a less consistent driver has a wider spread and a real chance of one that never comes together, which is how a quick driver ends up starting from the back.</p>
 <p>A driver keeps the best lap from the part they were knocked out in, so the grid below tenth is ordered by laps nobody in Q3 ever had to beat — which is why a Q2 faller can start ahead of a quicker Q1 time, exactly as it does in life. The <b>Starting grid</b> screen shows which part each driver went out in, and each driver's <i>belongs</i> position from the ratings alone. When those two disagree, the driver carries it into the race.</p>
 <h3>Reviewing an incident</h3><p>Opening a note gives you the incident at corner-cam distance, built from the frames the simulator keeps as it runs — the race as it actually happened, not a reconstruction. The scrubber lands on the moment the note was raised and tells you how far either side of it you are, so you can wind back into the approach and forward into the exit before deciding anything.</p>
@@ -2345,6 +2572,8 @@ $('#wx-auto').onclick=()=>{
 <h3>Why cars pass each other</h3><ul class="modal-guide"><li><b>Slipstream:</b> worth up to 5.5% more speed within 90 m, which is what puts a car inside the DRS window.</li><li><b>DRS:</b> three zones, armed at a detection point when the car ahead is within a second, open only inside the zone that follows and shut the moment the driver brakes.</li><li><b>Dirty air:</b> a follower within 42 m loses up to 17% of its cornering grip, so it drops back through the esses and takes the ground back on the next straight.</li><li><b>Alongside:</b> a car cannot drive through the one in front. Unless it is genuinely alongside it is held to the pace ahead, so a defender who covers the inside keeps the place and a queue forms behind them.</li><li><b>Mistakes:</b> pressure from behind, worn tyres and standing water all raise the chance of a missed braking point, which costs grip for about a second and runs the car wide.</li></ul><p>On mobile, switch between Track, Control, Telemetry and Radio. On PC, the monitors appear together. The radio is a written comms feed; cameras and sensors are synthetic. Preparation, medical and repair timings are compressed for play.</p><p class="legend">FIA-inspired fiction with no FIA affiliation. The operator simulates Race Control and confirms separately labelled stewards decisions. The full production script explains the real-rule reference points and scenario adaptations.</p>`);$('#guide-ref').textContent=laptime(REFLAP);$('#guide-avg').textContent=(LENGTH/REFLAP*3.6).toFixed(1)+' km/h';};document.addEventListener('input',e=>{if(e.target.id==='inc-replay')drawIncidentReplay();});
 $('#close-modal').onclick=()=>{window.__reviewing=null;$('#modal').close();};$('#modal').addEventListener('click',e=>{if(e.target===$('#modal'))$('#modal').close();});$('#qualifying').onclick=qualifying;
 $('#championship').onclick=championship;
+$('#run-session').onclick=()=>{const r=sim.advance();toast(r.message);selected=sim.cars[0].id;$('#car-select').value=selected;render();if(r.ok&&r.view)sessionSheet(r.view);};
+$('#wk-strip').onclick=e=>{const b=e.target.closest('[data-session]');if(b&&!b.disabled)sessionSheet(b.dataset.session);};
 $('#documents').onclick=()=>modal('Race Control document ledger',sim.documents.length?`<div class="modal-actions"><button id="export-ledger">Download ledger</button></div>`+sim.documents.map(d=>`<article class="script-beat"><span class="legend">${d.id} · ${d.type} · ${clock(d.time)}</span><h3>${esc(d.title)}</h3><p>${esc(d.body)}</p></article>`).join(''):'<p>No official simulator documents have been issued yet.</p>');document.addEventListener('click',e=>{if(e.target.id==='export-ledger')download('race-control-ledger.json',JSON.stringify(sim.documents,null,2),'application/json');});document.querySelectorAll('[data-comms]').forEach(b=>b.onclick=()=>{
  radioMode=b.dataset.comms;
  document.querySelectorAll('[data-comms]').forEach(x=>x.classList.toggle('active',x===b));
