@@ -1909,10 +1909,12 @@ function arcPath(fromFrac,toFrac,off,steps){
  for(let k=0;k<=steps;k++){const p=atFrac(fromFrac+span*k/steps,off);d+=(k?'L':'M')+p.x.toFixed(1)+','+p.y.toFixed(1);}
  return d;
 }
+/* Pull a label back inside the view rather than letting it fall off. */
+const clampToView=(x,y)=>[Math.max(16,Math.min(VIEW[0]-16,x)),Math.max(14,Math.min(VIEW[1]-8,y))];
 const sectorMark=f=>{
  const p=atFrac(f),i=idxOf((((f%1)+1)%1)*LENGTH),s=outwardSign[i];
  return{x:p.x+p.nx*s*(HALF+4),y:p.y+p.ny*s*(HALF+4),
-        lx:p.x+p.nx*s*(HALF+20),ly:p.y+p.ny*s*(HALF+20),nx:p.nx,ny:p.ny};
+        ...(([lx,ly])=>({lx,ly}))(clampToView(p.x+p.nx*s*(HALF+20),p.y+p.ny*s*(HALF+20))),nx:p.nx,ny:p.ny,tx:p.tx,ty:p.ty};
 };
 /* An outward offset of the centreline, used to hang the DRS zones alongside
    the asphalt rather than on top of it. */
@@ -1940,11 +1942,12 @@ function radarScene(){
 ${pitBoxD}
 <path d="${trackPath}" fill="none" stroke="#FFFFFF" stroke-width="${HALF*2}" stroke-linejoin="round"/>
 <path d="${trackPath}" fill="none" stroke="#71767F" stroke-width="${HALF*2-3}" stroke-linejoin="round"/>
-<g id="rl-water" opacity="0"><path d="${arcPath(SECTORS[2],1,0,90)}" fill="none" stroke="#5bb6fa" stroke-width="${HALF*2+6}" stroke-linecap="round"/></g>
+<g id="rl-water" opacity="0"><path d="${trackPath}" fill="none" stroke="#5bb6fa" stroke-width="${HALF*2+4}" stroke-linejoin="round"/>
+<path id="rl-dryline" d="${racePath}" fill="none" stroke="#71767F" stroke-width="${HALF-1}" stroke-linejoin="round" opacity="0"/></g>
 <text id="rl-water-label" x="0" y="0" fill="#88ceff" font-size="11" font-family="IBM Plex Mono, monospace" opacity="0"></text>
 ${drs}
 ${line(sectorMark(0),'#ffffff',3)}
-<text x="${(sf.x-6).toFixed(0)}" y="${(sf.y+24).toFixed(0)}" fill="#8E8C84" font-size="10" font-family="IBM Plex Mono, monospace" letter-spacing="1.2">START / FINISH</text>
+<text x="${(sf.x+sf.tx*46).toFixed(0)}" y="${(sf.y+sf.ty*46+sf.ny*20).toFixed(0)}" text-anchor="middle" fill="#8E8C84" font-size="10" font-family="IBM Plex Mono, monospace" letter-spacing="1.2">START / FINISH</text>
 ${line(s1,'#5C6069',2)}${line(s2,'#5C6069',2)}
 <text x="${s1.lx.toFixed(0)}" y="${s1.ly.toFixed(0)}" text-anchor="middle" fill="#7A7E87" font-size="11" font-family="IBM Plex Mono, monospace">S2</text>
 <text x="${s2.lx.toFixed(0)}" y="${s2.ly.toFixed(0)}" text-anchor="middle" fill="#7A7E87" font-size="11" font-family="IBM Plex Mono, monospace">S3</text>
@@ -2024,11 +2027,15 @@ function radar(){
  const snap=replayLive?null:sim.replay[Math.min(Number($('#replay').value),sim.replay.length-1)];
  $('#rl-flag').textContent=`${snap?.flag??sim.flag} · ${snap?'REPLAY':'LIVE'}`;
  const w=sim.weather,water=$('#rl-water'),wl=$('#rl-water-label');
- water.setAttribute('opacity',w>.3?(w*.3).toFixed(2):0);
+ water.setAttribute('opacity',w>.06?Math.min(.72,w*.8).toFixed(2):0);
  water.firstChild.setAttribute('stroke',w>.7?'#fb6677':'#5bb6fa');
- if(w>.3){const m=sectorMark(.72);wl.setAttribute('x',m.lx.toFixed(0));wl.setAttribute('y',m.ly.toFixed(0));
+ /* Once the line comes back it is painted dry through the standing water. */
+ const dl=$('#rl-dryline');
+ if(dl)dl.setAttribute('opacity',(sim.wx.lineDry*Math.min(1,w*3)).toFixed(2));
+ if(w>.06){const m=sectorMark(.5);wl.setAttribute('x',m.lx.toFixed(0));wl.setAttribute('y',m.ly.toFixed(0));
   wl.setAttribute('text-anchor','middle');wl.setAttribute('opacity','1');
-  wl.textContent=`S3 WATER ${(w*14).toFixed(1)} mm`;}else wl.setAttribute('opacity','0');
+  wl.textContent=`WATER ${(w*14).toFixed(1)} mm${sim.wx.lineDry>.25?' · LINE DRYING':''}`;}
+ else wl.setAttribute('opacity','0');
  const sc=$('#rl-sc');
  if(sim.sc.on){const p=pointAt(sim.sc.dist,lerpArr(RACE,sim.sc.dist)*USABLE);
   sc.setAttribute('opacity','1');sc.setAttribute('transform',`translate(${p.x.toFixed(1)},${p.y.toFixed(1)})`);}
@@ -2290,7 +2297,10 @@ $('#wx-auto').onclick=()=>{
 <li><b>Silverstone</b> — 5.891 km, 18 corners, 52 laps, two DRS zones. Reference lap <b>1:27.4</b> at 243 km/h against Verstappen's 1:27.097 record. Its character falls out of the geometry: flat through Copse and the Maggotts-Becketts sequence, and hard on the brakes for Village, Brooklands and Luffield, which at 96 km/h is the slowest corner either circuit has.</li></ul>
 <h3>The grid</h3><p>The 2026 field: eleven teams and twenty-two cars with their real numbers and drivers, the second car of each team in a lighter shade of the team colour. Skill and aggression are drawn per driver, so the order that emerges is the simulator's, not a prediction.</p>
 <h3>The drivers</h3><p>Each of the twenty-two carries three ratings on a 0-100 scale where 100 is the best on this grid: <b>pace</b> for one-lap speed, <b>racecraft</b> for how hard they will fight for a position, and <b>consistency</b> for how often they put a wheel wrong when pushed. Verstappen is the benchmark at 99/96/94; Alonso's racecraft is the highest on the grid at 97 with less outright pace; Stroll sits at 79/75/77 and Lindblad, the rookie, has the lowest consistency of anyone. Pace spreads the field by a little over two per cent, about what separates the quickest and slowest laps of a real one. The ratings are a judgement on recent form, not a measurement — they are the one part of this simulator that is an opinion.</p>
-<h3>Qualifying</h3><p>Every race starts with a flying lap each. Pace sets the time; a less consistent driver has a wider spread and a real chance of a lap that never comes together, which is how a quick driver ends up starting from the back. The <b>Starting grid</b> screen shows the times, the gaps, and each driver's <i>belongs</i> position — where the ratings alone would have put them. When those two disagree, the driver carries it into the race.</p>
+<h3>Qualifying</h3><p>Three parts, as the session is run: everyone in Q1 and the slowest five go out, fifteen in Q2 and five more go out, ten in Q3 for pole. Times come down through the session as the rubber goes down. Pace sets the lap; a less consistent driver has a wider spread and a real chance of one that never comes together, which is how a quick driver ends up starting from the back.</p>
+<p>A driver keeps the best lap from the part they were knocked out in, so the grid below tenth is ordered by laps nobody in Q3 ever had to beat — which is why a Q2 faller can start ahead of a quicker Q1 time, exactly as it does in life. The <b>Starting grid</b> screen shows which part each driver went out in, and each driver's <i>belongs</i> position from the ratings alone. When those two disagree, the driver carries it into the race.</p>
+<h3>Reviewing an incident</h3><p>Opening a note gives you the incident at corner-cam distance, built from the frames the simulator keeps as it runs — the race as it actually happened, not a reconstruction. The scrubber lands on the moment the note was raised and tells you how far either side of it you are, so you can wind back into the approach and forward into the exit before deciding anything.</p>
+<h3>The season</h3><p>Eight rounds in the order they fall. A race files against its round rather than joining a pile in whatever order you ran them, re-running a round replaces it, and the standings show the rounds still to come.</p>
 <h3>Pressure</h3><p>Two things make a driver push past what is comfortable, and both are read live:</p>
 <ul class="modal-guide">
 <li><b>The championship.</b> A driver near the top of the standings with a rival closing to within a race win's worth of points is defending something real. It scales with how high they are — leading with someone on your heels is the season; being fourteenth by the same margin is not — and it only switches on once two rounds have been filed.</li>
