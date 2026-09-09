@@ -1362,6 +1362,7 @@ class RaceEngine{
     this.sc={on:true,dist:(L?L.dist:0)+50,speed:40,state:'leading',queue:[]};
     this.rcm('SAFETY CAR','SAFETY CAR DEPLOYED');}
    this.flag='SC';this.answer('impact','neutralised');this.doc('Safety Car deployed','Full-course yellow and SC panels. No overtaking.');return say('SAFETY CAR DEPLOYED. Reduce speed and form the queue.');}if(action==='RED'){if(this.flag==='RED')return deny('The race is already suspended.');this.suspension={lap:this.lap,completed:this.lap-1,time:this.time,greenLaps:this.greenLaps,order:this.order().map(c=>({id:c.id,dist:c.dist,status:c.status}))};this.sc={on:false,dist:0,speed:0,state:null,queue:[]};
+   for(const c of this.cars)c.redPitted=!!c.pitState;
    this.flag='RED';this.answer('impact','neutralised');this.answer('weather','suspended');this.phase='RED_RETURN';this.phaseAt=this.time;this.pitExit=false;this.doc('Race suspended',`Red signal on lap ${this.lap}; ${this.lap-1} completed. Freeze timing and return slowly to the pit lane.`);this.radio('TEAM PRINCIPAL - TEAM A','If we restart, we want a standing start. We lost position through strategy!');this.radio('TEAM PRINCIPAL - TEAM B','Rolling if it clears, or end it. We have passed seventy-five percent!');return say('RED FLAG. No overtaking. Return slowly to the pit lane. Points do not decide whether the circuit is safe.');}this.flag=action;this.doc(action+' flag','Signal issued to all marshal posts and teams.');return say(action+' flag. All posts acknowledge.');}
  if(action==='medical'){if(!this.recovery)return deny('No active impact response.');if(!['SC','RED'].includes(this.flag))return deny('Neutralise with full Safety Car or red flag before dispatching onto the protected route.');if(this.recovery.medicalAt!=null)return deny('Medical response already dispatched.');this.recovery.medicalAt=this.time;this.answer('impact','medical');this.radio('CHIEF MEDICAL OFFICER (CMO)','Medical Car dispatched on the protected route. Twenty-eight G is an assessment trigger, not a diagnosis.');this.doc('Medical dispatch','CMO and rescue team routed to Sector 2.');return say('Medical route protected. Deputy, hold marshals until the CMO releases the work area.');}
  if(action==='repair'){const r=this.recovery;if(!r||!r.medicalClear)return deny('Recovery work held until the medical team clears the work area.');if(r.repairAt!=null)return deny('Barrier repair is already in progress.');r.repairAt=this.time;this.doc('Barrier work authorised','Marshals and recovery crew protected by full neutralisation.');return say('Begin recovery and barrier repair. Report completion, inspection and personnel clear separately.');}
@@ -1432,7 +1433,20 @@ class RaceEngine{
  if(this.phase==='FORMATION'){this.cars.forEach((c,i)=>{if(c.id!==45){c.dist=(this.time-this.phaseAt)/22*LENGTH-i*11;c.speed=LENGTH/22;}});if(this.time-this.phaseAt>=22){this.phase='GRID';this.cars.forEach((c,i)=>{c.dist=-i*9;c.speed=0;c.lat=c.lane=(i%2?1:-1)*2.6;c.latV=0;});this.radio('DEPUTY DIRECTOR / MARSHAL LEAD',`Grid formed. ${this.cast.grid?this.tag(this.cast.grid):'One car'} requires final alignment verification.`);}this.record();return;}
  if(this.phase==='LIGHTS'){this.lights=Math.min(5,1+Math.floor(this.time-this.phaseAt));if(this.time-this.phaseAt>6.4){this.phase='RACING';this.startAt=this.time;this.lights=0;this.strategise();this.doc('Race start','Five lights extinguished. Start transponder data retained.');this.radio('RACE DIRECTOR','Lights out. Race underway. Pit exit remains held until the field clears.');}return;}
  if(['FORMATION_READY','GRID','SUSPENDED'].includes(this.phase))return;
- if(this.phase==='RESUME_NOTICE'){if(this.time-this.phaseAt>=20){this.flag=this.resumeType==='rolling'?'SC':'GREEN';this.phase=this.resumeType==='rolling'?'SC_RESTART':'LIGHTS';this.phaseAt=this.time;this.cars.filter(c=>c.status==='RUNNING').forEach((c,i)=>{c.pitState=null;c.speed=0;c.dist=Math.floor(c.dist/LENGTH)*LENGTH-i*9;c.lat=c.lane=(i%2?1:-1)*2.6;c.latV=0;});if(this.resumeType==='rolling'){this.scEndAt=(Math.floor(this.leader.dist/LENGTH)+1)*LENGTH;this.cars.forEach(c=>c.restartAt=(Math.floor(c.dist/LENGTH)+1)*LENGTH);}this.radio('RACE DIRECTOR','Preparation complete. Execute the selected resumption procedure.');}return;}
+ if(this.phase==='RESUME_NOTICE'){if(this.time-this.phaseAt>=20){this.flag=this.resumeType==='rolling'?'SC':'GREEN';this.phase=this.resumeType==='rolling'?'SC_RESTART':'LIGHTS';this.phaseAt=this.time;/* The field forms up in classification order on the leader's lap, the way
+    a stopped race resumes. Placing each car at the start of its own lap
+    scattered them across the circuit - a car that never left the pit lane
+    ended up ten laps behind - and using the array index formed the grid in
+    qualifying order rather than the order they were running in. */
+   const base=Math.floor(this.leader.dist/LENGTH)*LENGTH;
+   const onTrack=this.order().filter(c=>c.status==='RUNNING'&&!c.redPitted);
+   /* A car that was in the pit lane when the race was stopped rejoins at the
+      back of the queue rather than being left where it stood. */
+   const inPit=this.order().filter(c=>c.status==='RUNNING'&&c.redPitted);
+   [...onTrack,...inPit].forEach((c,i)=>{
+    c.pitState=null;c.redPitted=false;c.speed=0;c.dist=base-i*9;
+    c.lat=c.lane=(i%2?1:-1)*2.6;c.latV=0;
+    c.lapAt=null;c.lapFrom=null;c.lapValid=false;});if(this.resumeType==='rolling'){this.scEndAt=(Math.floor(this.leader.dist/LENGTH)+1)*LENGTH;this.cars.forEach(c=>c.restartAt=(Math.floor(c.dist/LENGTH)+1)*LENGTH);}this.radio('RACE DIRECTOR','Preparation complete. Execute the selected resumption procedure.');}return;}
  this.wxTick(dt);
  this.scTick(dt);
  this.radioTick();
