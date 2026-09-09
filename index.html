@@ -756,7 +756,7 @@ const insideAhead=d=>{const k=lerpArr(kcen,d+70);return Math.abs(k)<1/260?0:(k>0
 
 function pointsFor(completed,totalLaps,greenLaps){if(greenLaps<2||completed<2)return {band:'No points',points:[]};const r=completed/totalLaps;return r<.25?{band:'Under 25%',points:[6,4,3,2,1]}:r<.5?{band:'25–50%',points:[13,10,8,6,5,4,3,2,1]}:r<.75?{band:'50–75%',points:[19,14,12,10,8,6,4,3,2,1]}:{band:'Full points',points:[25,18,15,12,10,8,6,4,2,1]};}
 class RaceEngine{
- constructor(seed=2026){this.seed=seed>>>0;this.time=0;this.nextSample=0;this.phaseAt=0;this.startAt=0;this.scEndAt=0;this.resumeType=null;this.phase='FORMATION_READY';this.flag='GREEN';this.paused=true;this.rate=4;this.totalLaps=CIRCUIT.laps;this.weather=0;this.events=[];this.documents=[];this.incidents=[];this.decisions=[];this.teamRadio=[];this.fiaRadio=[];this.messages=[];this.stewardsQueue=[];this.filed=false;this.samples=[];this.replay=[];this.snapshots={};this.triggers=new Set();this.gridClear=false;this.pitExit=false;this.lights=0;this.greenLaps=0;this.greenStreak=0;this.lastLeaderLap=0;this.scTime=0;this.scLap=null;this.unlapLap=null;this.returnOrders=[];this.result=null;this.suspension=null;this.recovery=null;this.scenario=1;this.campaign=true;this.cars=GRID2026.map(([id,name,code,teamId,pace,craft,cons],i)=>{
+ constructor(seed=2026){this.seed=seed>>>0;this.time=0;this.nextSample=0;this.phaseAt=0;this.startAt=0;this.scEndAt=0;this.resumeType=null;this.phase='FORMATION_READY';this.flag='GREEN';this.paused=true;this.rate=4;this.totalLaps=CIRCUIT.laps;this.weather=0;this.events=[];this.documents=[];this.incidents=[];this.burn=.018;this.decisions=[];this.teamRadio=[];this.fiaRadio=[];this.messages=[];this.stewardsQueue=[];this.filed=false;this.samples=[];this.replay=[];this.snapshots={};this.triggers=new Set();this.gridClear=false;this.pitExit=false;this.lights=0;this.greenLaps=0;this.greenStreak=0;this.lastLeaderLap=0;this.scTime=0;this.scLap=null;this.unlapLap=null;this.returnOrders=[];this.result=null;this.suspension=null;this.recovery=null;this.scenario=1;this.campaign=true;this.cars=GRID2026.map(([id,name,code,teamId,pace,craft,cons],i)=>{
   const team=TEAMS.find(t=>t.id===teamId),second=GRID2026.findIndex(g=>g[2]===teamId)!==i;
   return{id,name,code,team:teamId,teamName:team.name,boxSlot:TEAMS.indexOf(team),boxU:.34+TEAMS.indexOf(team)*.030+(second?.012:0),
    colour:second?lighten(team.colour,.42):team.colour,
@@ -771,7 +771,7 @@ class RaceEngine{
    plan:null,stintFrom:1,stopAt:0,pitRequested:false,
    ers:.8,fuel:100,brake:0,throttle:0,steer:0,heart:108,impact:0,intrusion:false,wing:2.3,plank:9.6,flow:0,
    pitState:id===41?'HOLD':null,pitTimer:0,stops:0,penalties:[],
-   decision:'Hold formation',reason:'Awaiting Race Control',candidates:[],nextDecision:0,warnings:0,bwFlag:false,cautionUntil:0,underInvestigation:false,trackLimits:0,limitAt:0,wideUntil:0,licencePoints:0,reprimands:0,mustPitBy:null,servingPenalty:null,blueAt:0,orangeFlag:false,
+   decision:'Hold formation',reason:'Awaiting Race Control',candidates:[],nextDecision:0,warnings:0,bwFlag:false,cautionUntil:0,underInvestigation:false,trackLimits:0,limitAt:0,wideUntil:0,contactAt:0,licencePoints:0,reprimands:0,mustPitBy:null,servingPenalty:null,blueAt:0,orangeFlag:false,
    status:'RUNNING',history:[],sectorDeltas:[0,0,0],gear:0,rpm:0,
    drs:false,drsArmed:false,mistakeUntil:0,lapAt:null,lapFrom:null,lapValid:false,lastDist:null,
    lastLap:null,bestLap:null,sectorAt:null,sectorIdx:null,radioAt:0,
@@ -784,6 +784,70 @@ class RaceEngine{
  get leader(){return this.order().find(c=>c.status!=='RETIRED')??this.cars[0];}
  get lap(){return Math.max(1,Math.floor((this.leader?.dist??0)/LENGTH)+1);}
  radio(channel,message){this.events.unshift({time:this.time,channel,message});if(this.events.length>140)this.events.length=140;}
+ /* ------------------------------- CONTACT --------------------------------
+    Two cars fighting over the same piece of road sometimes end up in each
+    other. How likely depends on how committed the attacker is, how steady
+    both drivers are and how much pressure they are carrying. Most of it is
+    a front wing and a few seconds; some of it ends a race. All of it goes
+    to the stewards naming the cars, the lap and the corner that were
+    actually involved, rather than a scripted pair. */
+ checkContact(dt,ordered,neutral){
+  if(neutral||this.phase!=='RACING')return;
+  for(let i=0;i<ordered.length-1;i++){
+   const a=ordered[i],b=ordered[i+1];
+   if(a.status!=='RUNNING'||b.status!=='RUNNING'||a.pitState||b.pitState)continue;
+   if(this.time-(a.contactAt||0)<25||this.time-(b.contactAt||0)<25)continue;
+   const gap=a.dist-b.dist;
+   if(gap<0||gap>7)continue;
+   const dl=Math.abs(a.lat-b.lat);
+   if(dl>3.2)continue;
+   const pace=lerpArr(VPROF,b.dist);
+   if(b.brake<35&&pace>72)continue;
+   const risk=dt*(.008+(b.decision==='Attack'?.026:0)+(b.mistakeUntil>this.time?.09:0)
+     +(a.mistakeUntil>this.time?.05:0))
+    *(1.8-b.steadiness)*(1.4-a.steadiness*.4)*(1+b.pressure*1.1)*(1-dl/3.2);
+   if(this.random()<risk){this.contact(a,b,dl,gap);return;}
+  }
+ }
+ contact(a,b,dl,gap){
+  a.contactAt=b.contactAt=this.time;
+  const turn=this.cornerAt(b.dist);
+  /* Who was at fault. A defender who moved across into a car that was
+     already alongside owns it; an attacker who was never alongside owns it
+     instead. That is the way the guidelines read it. */
+  const movedAcross=Math.sign(a.latV||0)===Math.sign(b.lat-a.lat)&&Math.abs(a.latV)>.9;
+  const alongside=dl<1.9&&gap<3.2;
+  const guilty=alongside&&movedAcross?a:b;
+  const other=guilty===a?b:a;
+  const roll=this.random();
+  let kind;
+  if(roll<.56){
+   kind='light';
+   b.wing=Math.max(b.wing,2.3)+1.3+this.random()*1.1;
+   b.mistakeUntil=this.time+1.3;
+   this.driver(b,'I have got damage, I think the front wing is gone.',true);
+  }else if(roll<.86){
+   kind='spin';
+   guilty.speed*=.3;guilty.mistakeUntil=this.time+3.6;guilty.wideUntil=this.time+2.2;
+   other.mistakeUntil=this.time+1;
+   this.driver(guilty,'I have been spun round. I am still going.',true);
+  }else{
+   kind='heavy';
+   guilty.status='RETIRED';guilty.speed=0;guilty.impact=18+Math.round(this.random()*22);
+   this.recovery={crashAt:this.time,medicalAt:null,medicalClear:false,repairAt:null,repaired:false};
+   this.addIncident('impact',`${guilty.impact} G IMPACT · TURN ${turn}`,
+    `${this.tag(guilty)} is stopped at the barrier after contact with ${this.tag(other)}. The car is in a live part of the circuit and marshals cannot reach it under green flags.`,
+    [guilty.id,other.id]);
+   this.rcm('INCIDENT',`${this.tag(guilty)} - STOPPED ON CIRCUIT - TURN ${turn}`,[guilty.id]);
+   this.driver(other,'He is in the wall. I think that is a safety car.',true);
+  }
+  this.rcm('INCIDENT',`CONTACT BETWEEN ${this.tag(a)} AND ${this.tag(b)} - TURN ${turn} - LAP ${this.lap}`,[a.id,b.id]);
+  this.refer([guilty,other],`CAUSING A COLLISION - TURN ${turn}`,
+   {likely:kind==='light'?.5:.8,penalty:kind==='heavy'?'time10':'time5',points:kind==='heavy'?3:2});
+  this.decisions.unshift({time:this.time,id:b.id,action:'Contact',
+   reason:`Contact with ${this.tag(a===b?a:a)} at turn ${turn}`});
+  this.decisions.length=Math.min(45,this.decisions.length);
+ }
  /* ------------------------------ QUALIFYING ------------------------------
     One flying lap each. Pace sets the time, and a driver who is less
     consistent has a wider spread and a real chance of a lap that never comes
@@ -803,6 +867,10 @@ class RaceEngine{
   [...this.cars].sort((a,b)=>(b.rating.pace*2+b.rating.craft)-(a.rating.pace*2+a.rating.craft))
    .forEach((c,i)=>{c.expected=i+1;});
   this.pole=this.cars[0];
+  /* Enough fuel for the distance and no more, which is what they run. */
+  /* Enough for the distance with the margin a real stint carries, so the
+     tank is never actually empty before the flag. */
+  this.burn=96/(this.totalLaps*REFLAP/RACEPACE*1.14);
  }
  /* ------------------------------- PRESSURE -------------------------------
     Two things make a driver push past what is comfortable: a championship
@@ -1139,7 +1207,11 @@ class RaceEngine{
     points and apex speeds follow the geometry rather than a lap fraction. */
  const pace=lerpArr(VPROF,c.dist),ideal=lerpArr(RACE,c.dist);
  const tyre=COMPOUNDS[c.compound]||COMPOUNDS.MEDIUM;
- const grip=RACEPACE*tyre.pace*c.skill*(.94+.06*c.tyre)*(1+c.pressure*.004)*(c.mistakeUntil>this.time?.87:1);
+ /* A car starts the race about three seconds a lap slower than it finishes
+    it, because it is carrying a hundred kilos it will have burned by the
+    end. Until now the fuel load was counted and then ignored. */
+ const fuelGain=1+.033*(1-c.fuel/100);
+ const grip=RACEPACE*tyre.pace*c.skill*fuelGain*(.94+.06*c.tyre)*(1+c.pressure*.004)*(c.mistakeUntil>this.time?.87:1);
  const offLine=Math.abs(c.lat/USABLE-ideal);
  let target=pace*grip*(1-.06*offLine*(1-this.weather*.85));
  if(c.decision==='Attack')target*=1.012+.022*c.ers;if(c.decision==='Defend')target*=.998;if(c.decision==='Conserve')target*=.968;
@@ -1295,7 +1367,7 @@ class RaceEngine{
     this.random()<dt*(.0016+(c.decision==='Attack'?.0022:0)+(1-c.tyre)*.0026+(pressured?.0012:0)+this.weather*.004)
      *(1.7-c.steadiness)*(1+c.pressure*1.1))
   c.wideUntil=this.time+.55+this.random()*.5;
- c.ers=clamp(c.ers+((c.decision==='Attack'?-.010:c.decision==='Conserve'?.012:.004)+(c.brake>25?.006:0))*dt,0,1);c.tyre=clamp(c.tyre-dt*tyre.wear*(c.decision==='Attack'?1.3:c.decision==='Conserve'?.78:1)*(this.weather>.6&&c.compound!=='WET'?2.2:1),.02,1);c.fuel=Math.max(0,c.fuel-dt*.018);c.flow=c.throttle*.96;c.heart=105+c.speed*.75+c.aggression*8;c.plank=Math.max(8.5,c.plank-dt*.000025);c.dist+=c.speed*dt;
+ c.ers=clamp(c.ers+((c.decision==='Attack'?-.010:c.decision==='Conserve'?.012:.004)+(c.brake>25?.006:0))*dt,0,1);c.tyre=clamp(c.tyre-dt*tyre.wear*(c.decision==='Attack'?1.3:c.decision==='Conserve'?.78:1)*(this.weather>.6&&c.compound!=='WET'?2.2:1),.02,1);c.fuel=Math.max(0,c.fuel-dt*this.burn);c.flow=c.throttle*.96;c.heart=105+c.speed*.75+c.aggression*8;c.plank=Math.max(8.5,c.plank-dt*.000025);c.dist+=c.speed*dt;
  if(ahead&&!c.unlapTarget&&!c.returnTo&&!ahead.returnTo&&(neutral||c.restartAt))c.dist=Math.min(c.dist,ahead.dist-9);if(c.restartAt&&c.dist>=c.restartAt)c.restartAt=null;if(c.unlapTarget&&c.dist>=c.unlapTarget&&this.leader.dist-c.dist<85){c.unlapTarget=null;this.radio('DEPUTY DIRECTOR / MARSHAL LEAD',`Car ${c.id} has completed its authorised unlapping pass.`);}/* Sector and lap timing measured against the reference lap, so every delta
     on the map is what the car actually did rather than an estimate. */
  /* Only a step that actually moved the car forward can cross a timing line:
@@ -1354,6 +1426,7 @@ class RaceEngine{
    c.lapAt=this.time;c.lapFrom=c.dist;c.lapValid=!c.pitState;c.tyreAge++;
   }
  }}
+ this.checkContact(dt,ordered,neutral);
  if(this.phase==='RED_RETURN'&&this.time-this.phaseAt>25){this.phase='SUSPENDED';this.cars.filter(c=>c.status==='RUNNING').forEach(c=>{c.pitState='HOLD';c.speed=0;c.throttle=0;c.brake=0;});this.radio('DEPUTY DIRECTOR / MARSHAL LEAD','All running cars stationary in the fast-lane queue. Pit exit red.');}
  if(this.phase==='SC_RESTART'&&this.leader.dist>=this.scEndAt){this.flag='GREEN';this.phase='RACING';this.unlapLap=null;this.radio('RACE DIRECTOR','Green at the line. Each car remains restricted until its own crossing.');}
 
@@ -1890,6 +1963,9 @@ $('#play').onclick=()=>{if(sim.phase==='FORMATION_READY')sim.command('formation'
 <h3>The FIA channel</h3><p>The <b>FIA</b> tab is your own transmitter. Choose a recipient — every driver, a team principal, or the whole field — and a call: a driving standards warning, a black-and-white flag, a note that an incident is under investigation, a five or ten second penalty, or a summons. What you send lands on the car: a warned driver backs off for two minutes, a car already carrying a black-and-white flag has its <i>next</i> offence escalate to a penalty on its own, and a time penalty is served at that car's next stop. Warnings, flags and investigations are marked against the car in the timing tower, and principals do not always take a penalty quietly.</p>
 <h3>Championship</h3><p>Every classified race is filed to a season kept in this browser: driver and constructor standings, points by round and the winner of each. It builds up as circuits are added, and can be exported as JSON or cleared from the standings screen.</p>
 <h3>Team radio</h3><p>The comms panel carries every team's pit wall and driver on their own channel, filterable by team, so what each of the twenty-two drivers is about to do is readable without opening a telemetry panel: the plan they were given, the lap they are called in, whether a stop is an undercut or a tyre that has gone, and what they found on the out lap.</p>
+<h3>Contact</h3><p>Two cars fighting over the same piece of road sometimes end up in each other. It needs them genuinely overlapping, in a braking zone or a corner, and how likely it is depends on how committed the attacker is, how steady both drivers are and how much pressure they are carrying — so it happens where and to whom you would expect. A race produces two or three, which is about what a real one does.</p>
+<p>Fault is apportioned the way the guidelines read it: a defender who moved across into a car that was already alongside owns it, an attacker who was never alongside owns it instead. Most contact costs a front wing and a few seconds; some spins a car round; occasionally a car is left in the barrier, which opens a real impact note on the console naming the cars, the lap and the corner that were actually involved — and from there it is the Safety Car and the medical response, exactly as the scripted one behaves. Nothing about it is authored.</p>
+<h3>Fuel</h3><p>A car starts the race about three seconds a lap slower than it finishes it, because it is carrying a hundred kilos it will have burned by the end. Lap times fall through every stint, and the fastest lap of the race tends to come late on a light car — which is where they come in life.</p>
 <h3>Why cars pass each other</h3><ul class="modal-guide"><li><b>Slipstream:</b> worth up to 5.5% more speed within 90 m, which is what puts a car inside the DRS window.</li><li><b>DRS:</b> three zones, armed at a detection point when the car ahead is within a second, open only inside the zone that follows and shut the moment the driver brakes.</li><li><b>Dirty air:</b> a follower within 42 m loses up to 17% of its cornering grip, so it drops back through the esses and takes the ground back on the next straight.</li><li><b>Alongside:</b> a car cannot drive through the one in front. Unless it is genuinely alongside it is held to the pace ahead, so a defender who covers the inside keeps the place and a queue forms behind them.</li><li><b>Mistakes:</b> pressure from behind, worn tyres and standing water all raise the chance of a missed braking point, which costs grip for about a second and runs the car wide.</li></ul><p>On mobile, switch between Track, Control, Telemetry and Radio. On PC, the monitors appear together. The radio is a written comms feed; cameras and sensors are synthetic. Preparation, medical and repair timings are compressed for play.</p><p class="legend">FIA-inspired fiction with no FIA affiliation. The operator simulates Race Control and confirms separately labelled stewards decisions. The full production script explains the real-rule reference points and scenario adaptations.</p>`);$('#guide-ref').textContent=laptime(REFLAP);$('#guide-avg').textContent=(LENGTH/REFLAP*3.6).toFixed(1)+' km/h';};$('#close-modal').onclick=()=>$('#modal').close();$('#modal').addEventListener('click',e=>{if(e.target===$('#modal'))$('#modal').close();});$('#qualifying').onclick=qualifying;
 $('#championship').onclick=championship;
 $('#documents').onclick=()=>modal('Race Control document ledger',sim.documents.length?`<div class="modal-actions"><button id="export-ledger">Download ledger</button></div>`+sim.documents.map(d=>`<article class="script-beat"><span class="legend">${d.id} · ${d.type} · ${clock(d.time)}</span><h3>${esc(d.title)}</h3><p>${esc(d.body)}</p></article>`).join(''):'<p>No official simulator documents have been issued yet.</p>');document.addEventListener('click',e=>{if(e.target.id==='export-ledger')download('race-control-ledger.json',JSON.stringify(sim.documents,null,2),'application/json');});document.querySelectorAll('[data-comms]').forEach(b=>b.onclick=()=>{
