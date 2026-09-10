@@ -7,6 +7,9 @@
 color-scheme:light;font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;font-size:15px}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+.message.comm h3{display:flex;align-items:center;gap:5px;font-size:.625rem;color:var(--muted)}
+.message.comm h3 i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.message.comm p{font-size:.8125rem;line-height:1.5}
 .setup-grid{display:grid;gap:10px;margin:12px 0}
 .setup-grid label{display:grid;grid-template-columns:74px 1fr auto;gap:10px;align-items:center;
  font-size:.6875rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
@@ -380,7 +383,7 @@ dialog{width:calc(100% - 16px);max-height:94dvh}
 <section class="cameras" data-mobile="track"><div class="panel"><div class="panel-head"><h2>Corner cam</h2><span id="corner-meta">—</span></div><div id="corner" class="camera"></div></div><div class="panel"><div class="panel-head"><h2>Pit lane</h2><span id="pit-light">EXIT RED</span></div><div id="pitcam" class="camera"></div></div></section>
 <section class="panel control" data-mobile="control"><div class="panel-head"><h2>Console</h2><span>HUMAN AUTHORITY</span></div><div class="weekend"><span id="wk-label">GRAND PRIX WEEKEND</span><div class="wk-strip" id="wk-strip"></div><p class="wk-note" id="wk-note"></p><button id="run-session" class="small wide">Run next session</button></div><div class="next"><span>NEXT OPERATION</span><h3 id="next-title">Begin formation</h3><p id="next-copy">The field is ready. Car 41 will start from the pit lane.</p><button id="next" class="primary wide" data-command="formation">Begin formation lap</button></div><details><summary>Start &amp; pit protocol</summary><div class="button-grid"><button data-command="grid" id="verify-btn">Verify grid</button><button data-command="lights">Arm grid lights</button><button data-command="pit">Pit exit green</button></div></details><details><summary>Recovery &amp; Safety Car</summary><div class="button-grid"><button data-command="medical">Dispatch medical</button><button data-command="repair">Authorise repair</button><button data-command="unlap">Unlap eligible cars</button><button data-command="scin">SC in this lap</button></div><p class="status-line" id="recovery-state">Medical cover available · circuit clear</p></details><details><summary>Weather &amp; resumption</summary><label class="weather-control">Surface water <input id="weather" type="range" min="0" max="100" value="0"><span id="water">Dry</span></label><button id="wx-auto" class="small wide" aria-pressed="true">Live weather · on</button><div class="button-grid"><button data-command="standing">Standing restart</button><button data-command="rolling">Rolling restart</button><button data-command="finish">No resumption / results</button></div></details><div class="panel-head inset"><h2>StewardAI</h2><span>PRE-SCREEN ONLY</span></div><div id="incidents"></div><button class="wide ledger" id="documents">Documents <span id="document-count">0</span></button><button class="wide ledger" id="qualifying">Starting grid</button><button class="wide ledger" id="championship">Championship <span id="race-count">0</span></button><button class="wide ledger" id="season-menu">Championship setup</button></section>
 <section class="panel telemetry" data-mobile="telemetry"><div class="panel-head"><h2>Telemetry</h2><div class="selectors"><label>Car <select id="car-select"></select></label><label>Compare <select id="compare-select"></select></label></div></div><div class="telemetry-layout"><div><div class="metrics" id="metrics"></div><div class="traces" id="traces"></div></div><div class="data-column"><h3>Biometric & impact</h3><div id="medical"></div><h3>Tyres &amp; strategy</h3><div id="technical"></div></div></div><div class="decision-card"><span>AUTONOMOUS DRIVER POLICY</span><h3 id="decision-title">Holding formation</h3><p id="decision-reason">Awaiting the director's signal.</p><div class="pressure" id="pressure-line"></div><div id="utilities"></div></div></section>
-<section class="panel radio" data-mobile="radio"><div class="panel-head"><h2>Comms</h2><span>7 ch</span></div><div class="radio-tabs"><button data-comms="team" class="active">Team</button><button data-comms="radio">Messages</button><button data-comms="ops">Control</button><button data-comms="fia">FIA</button><button data-comms="ai">Decisions</button></div><label class="comms-filter" id="team-filter-row">Team <select id="team-filter"><option value="">All teams</option></select></label>
+<section class="panel radio" data-mobile="radio"><div class="panel-head"><h2>Comms</h2><span>7 ch</span></div><div class="radio-tabs"><button data-comms="commentary" class="active">Commentary</button><button data-comms="team">Team</button><button data-comms="radio">Messages</button><button data-comms="ops">Control</button><button data-comms="fia">FIA</button><button data-comms="ai">Decisions</button></div><label class="comms-filter" id="team-filter-row">Team <select id="team-filter"><option value="">All teams</option></select></label>
 <div class="fia-compose" id="fia-compose" hidden>
  <label>To <select id="fia-to"></select></label>
  <label>Call <select id="fia-action">
@@ -1087,7 +1090,7 @@ class RaceEngine{
     the first with different scenery: qualifying, the weather and who ends up
     in whom all differ from round to round. */
  constructor(seed=2026+((season.races&&season.races.length||0)*101)){this.seed=seed>>>0;this.time=0;this.nextSample=0;this.phaseAt=0;this.startAt=0;this.scEndAt=0;this.resumeType=null;this.phase='FORMATION_READY';this.flag='GREEN';this.paused=true;this.rate=4;this.totalLaps=CIRCUIT.laps;this.weather=0;this.events=[];this.documents=[];this.incidents=[];this.burn=94/(50*6000);this.liveWeather=true;this.cast={};this.isSprint=false;
-  this.weekend={format:formatFor(CIRCUIT.key),idx:0,results:{}};this.sc={on:false,dist:0,speed:0,state:null,queue:[]};this.wx={rain:0,target:0,at:150,lineDry:0};this.decisions=[];this.teamRadio=[];this.fiaRadio=[];this.messages=[];this.stewardsQueue=[];this.filed=false;this.samples=[];this.replay=[];this.snapshots={};this.triggers=new Set();this.gridClear=false;this.pitExit=false;this.lights=0;this.greenLaps=0;this.greenStreak=0;this.lastLeaderLap=0;this.scTime=0;this.scLap=null;this.unlapLap=null;this.unlapAt=0;this.returnOrders=[];this.result=null;this.suspension=null;this.recovery=null;this.scenario=1;this.campaign=false;this.cars=GRID2026.slice(0,setupDrivers()).map(([id,name,code,teamId,pace,craft,cons],i)=>{
+  this.weekend={format:formatFor(CIRCUIT.key),idx:0,results:{}};this.sc={on:false,dist:0,speed:0,state:null,queue:[]};this.wx={rain:0,target:0,at:150,lineDry:0};this.decisions=[];this.teamRadio=[];this.commentary=[];this.fiaRadio=[];this.messages=[];this.stewardsQueue=[];this.filed=false;this.samples=[];this.replay=[];this.snapshots={};this.triggers=new Set();this.gridClear=false;this.pitExit=false;this.lights=0;this.greenLaps=0;this.greenStreak=0;this.lastLeaderLap=0;this.scTime=0;this.scLap=null;this.unlapLap=null;this.unlapAt=0;this.returnOrders=[];this.result=null;this.suspension=null;this.recovery=null;this.scenario=1;this.campaign=false;this.cars=GRID2026.slice(0,setupDrivers()).map(([id,name,code,teamId,pace,craft,cons],i)=>{
   const team=TEAMS.find(t=>t.id===teamId),second=GRID2026.findIndex(g=>g[2]===teamId)!==i;
   return{id,name,code,team:teamId,teamName:team.name,boxSlot:TEAMS.indexOf(team),boxU:.34+TEAMS.indexOf(team)*.030+(second?.012:0),
    colour:second?lighten(team.colour,.42):team.colour,
@@ -1642,6 +1645,86 @@ class RaceEngine{
  }
  /* What is worth saying to this driver right now. One thing at a time, and
     only when there is something - a race is not a running commentary. */
+ /* ------------------------------ COMMENTARY -----------------------------
+    Someone watching the race and saying what is happening in it. It only has
+    two subjects, because they are the two that matter: a fight that has gone
+    on long enough to be a fight - five seconds inside a second and a half -
+    and a move that actually gets done. Everything it says names both drivers,
+    the gap, the lap and where on the circuit it happened. */
+ comment(text,cars){
+  this.commentary.unshift({time:this.time,lap:this.lap,text,cars:cars||[]});
+  if(this.commentary.length>160)this.commentary.length=160;
+ }
+ commentTick(dt){
+  if(this.phase!=='RACING'||this.flag!=='GREEN')return;
+  if(this.time<(this._comAt||0))return;
+  this._comAt=this.time+.5;
+  const order=this.order().filter(c=>c.status!=='RETIRED'&&!c.pitState);
+  this.fights=this.fights||new Map();
+  const live=new Set(), queue=[];
+  for(let i=0;i<order.length-1;i++){
+   const a=order[i],b=order[i+1];
+   if(Math.floor(a.dist/LENGTH)!==Math.floor(b.dist/LENGTH))continue;
+   const gap=(a.dist-b.dist)/Math.max(14,b.speed);
+   const kk=a.id+'|'+b.id, rev=b.id+'|'+a.id;
+   /* A pass: the pair we were watching has swapped over. */
+   const was=this.fights.get(rev);
+   if(was&&was.since){
+    this.fights.delete(rev);
+    const turn=this.cornerAt(a.dist);
+    const held=Math.round(this.time-was.since);
+    queue.push({pri:0,pos:i,cars:[a.id,b.id],text:this.vary(a,'pass',[
+      `${a.name} has done it! Past ${b.name} at turn ${turn} on lap ${this.lap}, after ${held} seconds of trying.`,
+      `That is the move - ${a.name} gets ${b.name} at turn ${turn}. He had been all over the back of him for ${held} seconds.`,
+      `${a.name} makes it stick at turn ${turn}! ${b.name} had no answer for that one.`,
+      `Position change for ${a.name} at turn ${turn}, and ${b.name} will not get that one back easily.`])});
+    continue;
+   }
+   if(gap>0&&gap<1.5){
+    live.add(kk);
+    let f=this.fights.get(kk);
+    if(!f){
+     /* A pair that was just reported does not get reported again the moment
+        they come back into range. */
+     const seen=(this.fightSeen=this.fightSeen||new Map()).get(kk)||0;
+     f={start:this.time,since:this.time-seen<150?this.time:null,told:0};
+     this.fights.set(kk,f);
+    }
+    /* Five seconds of it and it is worth talking about. */
+    if(!f.since&&this.time-f.start>=5){
+     f.since=f.start;
+     (this.fightSeen=this.fightSeen||new Map()).set(kk,this.time);
+     queue.push({pri:1,pos:i,cars:[a.id,b.id],text:this.vary(b,'fight',[
+       `${b.name} is right with ${a.name} now, ${gap.toFixed(1)} behind and looking for a way through.`,
+       `A fight developing for P${i+1}: ${a.name} defending from ${b.name}, ${gap.toFixed(1)} between them.`,
+       `${b.name} has closed onto the back of ${a.name}. ${gap.toFixed(1)} and this is going to be a scrap.`])});
+    }
+    /* And if it goes on and on, that is a story of its own. */
+    /* A long stalemate is only worth mentioning near the front, and not
+       often - it is one story, not one every lap. */
+    else if(i<8&&f.since&&this.time-f.since>75&&this.time-(f.told||0)>220){
+     f.told=this.time;
+     queue.push({pri:2,pos:i,cars:[a.id,b.id],text:this.vary(b,'grind',[
+       `${b.name} still cannot find a way past ${a.name}. That is ${Math.round((this.time-f.since)/60)} minute${this.time-f.since>=120?'s':''} of this now.`,
+       `${a.name} is holding ${b.name} up beautifully. Nothing between them but nowhere to go.`,
+       `${b.name} has had ${gap.toFixed(1)} to look at for lap after lap. The frustration will be building.`])});
+    }
+   }
+  }
+  /* A commentator says one thing at a time, and says the most interesting
+     thing: a move before a fight, and a fight at the front before one at the
+     back. Everything else that happened in the same breath is dropped. */
+  if(queue.length){
+   queue.sort((x,y)=>x.pri-y.pri||x.pos-y.pos);
+   const top=queue[0];
+   if(top.pri===0||this.time-(this._saidAt||0)>9){
+    this._saidAt=this.time;
+    this.comment(top.text,top.cars);
+   }
+  }
+  /* A fight that quietly ends is not a fight any more. */
+  for(const [kk,f] of this.fights)if(!live.has(kk)&&this.time-f.start>6)this.fights.delete(kk);
+ }
  chatter(dt){
   if(this.phase!=='RACING')return;
   if(this.time<(this._chatAt||0))return;
@@ -2210,6 +2293,7 @@ class RaceEngine{
  if(this.time>=(this._pressAt||0)){this._pressAt=this.time+4;this.updatePressure();}
  this.updateMood(dt);
  this.chatter(dt);
+ this.commentTick(dt);
  let ordered=this.order();const leader=ordered[0];const neutral=['SC','VSC','RED'].includes(this.flag);for(let i=0;i<ordered.length;i++){const c=ordered[i];if(c.status==='RETIRED')continue;if(c.nextDecision<=this.time){this.choose(c);c.nextDecision=this.time+.7+this.random()*.5;}const old=c.dist,frac=((c.dist%LENGTH)+LENGTH)%LENGTH/LENGTH;c.aside=0;
  const lapNo=Math.floor(c.dist/LENGTH);if(c.lineLap!==lapNo||!c.line){c.lineLap=lapNo;c.line=newLineStyle(()=>this.random());}
  const oldFrac=((old%LENGTH)+LENGTH)%LENGTH/LENGTH;
@@ -2288,10 +2372,22 @@ class RaceEngine{
  if(c.returnReleaseAt>this.time){const b=this.car(c.lastReturnTo);target=Math.min(target,Math.max(16,b.speed+(b.dist-c.dist-28)*.25));c.aside=.8;}/* No car drives through the one in front. Unless it is genuinely alongside it
    is held to the pace ahead, so a pass has to be made with a move to the side
    and a defender covering that side actually keeps the place. */
- /* Alongside means alongside: a car's width of separation and close enough
-    that the front axle is at least at the other car's rear. Anything less is
-    behind, and behind does not get the corner. */
- const alongside=!!ahead&&Math.abs(c.lat-ahead.lat)>3.0&&gapAhead<6.2;
+ /* Alongside means alongside, and what that takes depends on how wide the
+    road is. A lateral unit is worth fewer metres on a narrow circuit, so the
+    two cars have to be further apart in those units to have a car's width
+    between them - which on a nine-metre street is most of the road. */
+ const LATM=(trackWidth()/2-1.0)/USABLE;
+ const needLat=2.3/LATM;
+ /* And there has to be somewhere to do it. A move is made into a braking
+    zone or with the flap open on a straight; a driver alongside in the
+    middle of a wall-lined sweep is not overtaking, they are having an
+    accident. This is what separates a circuit with three heavy stops from
+    one with a single real one. */
+ const vHere=lerpArr(VPROF,c.dist);
+ let vLow=vHere;
+ for(let m=40;m<=260;m+=40){const v=lerpArr(VPROF,c.dist+m);if(v<vLow)vLow=v;}
+ const passZone=(vHere-vLow)>15||c.drs;
+ const alongside=!!ahead&&Math.abs(c.lat-ahead.lat)>needLat&&gapAhead<6.2&&passZone;
  if(ahead&&!c.unlapTarget&&!c.returnTo&&!ahead.returnTo){
   /* Behind the Safety Car a car is allowed to close right up on the one in
      front - that is the whole point of the queue - so it holds to its slot
@@ -2785,7 +2881,7 @@ function standings(){
 const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clock=t=>`${String(Math.floor(t/3600)).padStart(2,'0')}:${String(Math.floor(t/60)%60).padStart(2,'0')}:${String(Math.floor(t)%60).padStart(2,'0')}`;
 let lastFlag=null;
-let sim=new RaceEngine(),selected=16,compare=55,replayLive=true,projection=false,radioMode='team',lastRender=0,lastFrame=performance.now(),toastUntil=0;
+let sim=new RaceEngine(),selected=16,compare=55,replayLive=true,projection=false,radioMode='commentary',lastRender=0,lastFrame=performance.now(),toastUntil=0;
 const svg=(view,body)=>`<svg viewBox="${view}" role="img" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
 function carShape(c,p,large=false){const sel=c.id===selected,col=c.status==='RETIRED'?'#8A8D94':c.color,r=large?6:5;
  return `<g transform="translate(${p.x},${p.y})" data-car="${c.id}" style="cursor:pointer">${sel?`<circle r="${r+4.5}" fill="none" stroke="${col}" stroke-width="1.4" opacity=".65"/>`:''}<circle r="${r}" fill="${col}" stroke="#0B0D12" stroke-width="1"/><text x="${r+5}" y="4" fill="${col}" font-size="${large?12:11}" font-family="IBM Plex Mono, monospace" font-weight="${sel?600:500}" letter-spacing=".5">${c.id} ${c.name}</text></g>`;}
@@ -3045,7 +3141,14 @@ function operations(){let title='Monitor the race',copy='Drivers make their own 
 function comms(){
  const pick=$('#team-filter').value;
  let html;
- if(radioMode==='team'){
+ if(radioMode==='commentary'){
+  html=(sim.commentary||[]).map(m=>{
+   const cs=(m.cars||[]).map(id=>sim.car(id)).filter(Boolean);
+   return `<article class="message comm"><span class="time">LAP ${m.lap} · ${clock(m.time)}</span>`
+    +`<h3>${cs.map(c=>`<i style="background:${c.colour}"></i>${c.id}`).join(' ')} ON TRACK</h3>`
+    +`<p>${esc(m.text)}</p></article>`;}).join('');
+  if(!html)html='<p class="empty">Nothing to call yet. Fights that last more than five seconds, and the moves that come out of them, are reported here.</p>';
+ }else if(radioMode==='team'){
   const msgs=sim.teamRadio.filter(m=>!pick||m.team===pick);
   html=msgs.map(m=>`<article class="message"><span class="time">L${m.lap} · ${clock(m.time)}</span>`
    +`<h3 style="color:${m.colour}">${m.id} ${esc(m.name)} · ${m.from==='PIT'?esc(m.teamName)+' PIT WALL':'DRIVER'}</h3>`
@@ -3579,6 +3682,15 @@ const SCENERY={
    stands:[[.955,.05]],wallCols:['#e7e5dd','#b8353c'],ground:'#212a20'}
 };
 const scenery=()=>SCENERY[CIRCUIT.key]||SCENERY.def;
+/* How wide the road actually is, in metres. Two cars are two metres each, so
+   a nine-metre street between barriers is a different proposition from a
+   fifteen-metre one with asphalt on both sides - and it is the reason a move
+   that is routine at Monza is not on at all at Monaco. */
+const TRACKW={monaco:9,jeddah:12,miami:12,madrid:12,singapore:12,melbourne:13,montreal:13,
+ spielberg:13,spa:13,hungaroring:13,zandvoort:13,baku:13,interlagos:13,suzuka:13,
+ shanghai:14,bahrain:14,barcelona:14,losail:14,yasmarina:14,
+ silverstone:15,monza:15,cota:15,mexico:15,vegas:15};
+const trackWidth=()=>TRACKW[CIRCUIT.key]||14;
 /* A repeatable pseudo-random for scenery placement, so the palms do not
    dance about between frames. */
 const shash=n=>{let x=Math.sin(n*127.1)*43758.5453;return x-Math.floor(x);};
