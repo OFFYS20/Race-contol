@@ -345,7 +345,7 @@ h1 span{display:block;font-size:.6rem;margin:4px 0 0;letter-spacing:.18em}
 .brand p{display:none}
 .session{flex-wrap:wrap;justify-content:flex-end;max-width:150px;gap:6px;font-size:.6875rem}
 .toolbar{margin:0 12px;padding:9px 0 4px;gap:6px}
-.toolbar .legend{display:none}.scenario-label{flex:1;min-width:180px}.scenario-label select{width:100%}
+.toolbar .legend{display:none}
 .flags{margin:0;padding:8px 12px;position:sticky;top:0;z-index:5;
  background:var(--paper);border-bottom:1px solid var(--ink)}
 .flags>span{display:none}.flags button{flex:1;min-width:0;font-size:.625rem;min-height:36px;padding:5px 2px}
@@ -375,7 +375,7 @@ dialog{width:calc(100% - 16px);max-height:94dvh}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style></head><body>
 <header class="mast"><div class="brand"><span class="mark">RC</span><div><h1>AEGIS <span>RACE CONTROL</span></h1><p id="circuit-line">JEDDAH CORNICHE · SAUDI ARABIAN GP</p></div></div><div class="session"><span id="phase">FORMATION READY</span><b id="lap">LAP 01 / 50</b><span id="clock">00:00</span><span class="flag" id="flag">GREEN</span></div></header>
-<div class="toolbar"><button class="primary" id="play">Run</button><label>Pace <select id="rate"><option value="1">1×</option><option value="4" selected>4×</option><option value="8">8×</option><option value="16">16×</option><option value="32">32×</option></select></label><label>Circuit <select id="circuit"><option value="melbourne">R1 · Melbourne · Australia</option><option value="shanghai">R2 · Shanghai · China</option><option value="suzuka">R3 · Suzuka · Japan</option><option value="bahrain">R4 · Sakhir · Bahrain</option><option value="jeddah">R5 · Jeddah · Saudi Arabia</option><option value="miami">R6 · Miami · United States</option><option value="montreal">R7 · Montreal · Canada</option><option value="monaco">R8 · Monaco · Monte Carlo</option><option value="barcelona">R9 · Barcelona · Spain</option><option value="spielberg">R10 · Spielberg · Austria</option><option value="silverstone">R11 · Silverstone · United Kingdom</option><option value="spa">R12 · Spa-Francorchamps · Belgium</option><option value="hungaroring">R13 · Budapest · Hungary</option><option value="zandvoort">R14 · Zandvoort · Netherlands</option><option value="monza">R15 · Monza · Italy</option><option value="madrid">R16 · Madrid · Spain</option><option value="baku">R17 · Baku · Azerbaijan</option><option value="singapore">R18 · Singapore · Singapore</option><option value="cota">R19 · Austin · United States</option><option value="mexico">R20 · Mexico City · Mexico</option><option value="interlagos">R21 · São Paulo · Brazil</option><option value="vegas">R22 · Las Vegas · United States</option><option value="losail">R23 · Lusail · Qatar</option><option value="yasmarina">R24 · Yas Marina · United Arab Emirates</option></select></label><label class="scenario-label">Scenario <select id="scenario"><option value="1">01 · Formation & grid</option><option value="2">02 · Unsafe release</option><option value="3">03 · Apex dispute</option><option value="4">04 · Impact & restart</option><option value="5">05 · Weather emergency</option></select></label><button id="load">Checkpoint</button><span class="legend">Offline edition</span><button id="script" class="small">Script</button><button id="help" class="small" aria-label="Open operating guide">Guide</button></div>
+<div class="toolbar"><button class="primary" id="play">Run</button><label>Pace <select id="rate"><option value="1">1×</option><option value="4" selected>4×</option><option value="8">8×</option><option value="16">16×</option><option value="32">32×</option></select></label><label>Circuit <select id="circuit"><option value="melbourne">R1 · Melbourne · Australia</option><option value="shanghai">R2 · Shanghai · China</option><option value="suzuka">R3 · Suzuka · Japan</option><option value="bahrain">R4 · Sakhir · Bahrain</option><option value="jeddah">R5 · Jeddah · Saudi Arabia</option><option value="miami">R6 · Miami · United States</option><option value="montreal">R7 · Montreal · Canada</option><option value="monaco">R8 · Monaco · Monte Carlo</option><option value="barcelona">R9 · Barcelona · Spain</option><option value="spielberg">R10 · Spielberg · Austria</option><option value="silverstone">R11 · Silverstone · United Kingdom</option><option value="spa">R12 · Spa-Francorchamps · Belgium</option><option value="hungaroring">R13 · Budapest · Hungary</option><option value="zandvoort">R14 · Zandvoort · Netherlands</option><option value="monza">R15 · Monza · Italy</option><option value="madrid">R16 · Madrid · Spain</option><option value="baku">R17 · Baku · Azerbaijan</option><option value="singapore">R18 · Singapore · Singapore</option><option value="cota">R19 · Austin · United States</option><option value="mexico">R20 · Mexico City · Mexico</option><option value="interlagos">R21 · São Paulo · Brazil</option><option value="vegas">R22 · Las Vegas · United States</option><option value="losail">R23 · Lusail · Qatar</option><option value="yasmarina">R24 · Yas Marina · United Arab Emirates</option></select></label><span class="legend">Offline edition</span><button id="script" class="small">Script</button><button id="help" class="small" aria-label="Open operating guide">Guide</button></div>
 <nav class="flags" aria-label="Race flags"><span>Track signal</span><button data-command="GREEN" class="green">Green</button><button data-command="YELLOW" class="yellow">Yellow</button><button data-command="VSC">VSC</button><button data-command="SC" class="amber">Safety car</button><button data-command="RED" class="red">Red</button></nav>
 <main class="deck" data-view="track">
 <section class="panel tower" data-mobile="track"><div class="panel-head"><h2>Timing</h2><span>LIVE</span></div><div class="tower-head"><span>POS / CAR</span><span>INTERVAL</span></div><div id="timing"></div><div class="tower-foot" id="tower-note"><span>Click a car to inspect its decisions.</span></div></section>
@@ -1090,7 +1090,7 @@ class RaceEngine{
     the first with different scenery: qualifying, the weather and who ends up
     in whom all differ from round to round. */
  constructor(seed=2026+((season.races&&season.races.length||0)*101)){this.seed=seed>>>0;this.time=0;this.nextSample=0;this.phaseAt=0;this.startAt=0;this.scEndAt=0;this.resumeType=null;this.phase='FORMATION_READY';this.flag='GREEN';this.paused=true;this.rate=4;this.totalLaps=CIRCUIT.laps;this.weather=0;this.events=[];this.documents=[];this.incidents=[];this.burn=94/(50*6000);this.liveWeather=true;this.cast={};this.isSprint=false;
-  this.weekend={format:formatFor(CIRCUIT.key),idx:0,results:{}};this.sc={on:false,dist:0,speed:0,state:null,queue:[]};this.wx={rain:0,target:0,at:150,lineDry:0};this.decisions=[];this.teamRadio=[];this.commentary=[];this.fiaRadio=[];this.messages=[];this.stewardsQueue=[];this.filed=false;this.samples=[];this.replay=[];this.snapshots={};this.triggers=new Set();this.gridClear=false;this.pitExit=false;this.lights=0;this.greenLaps=0;this.greenStreak=0;this.lastLeaderLap=0;this.scTime=0;this.scLap=null;this.unlapLap=null;this.unlapAt=0;this.returnOrders=[];this.result=null;this.suspension=null;this.recovery=null;this.scenario=1;this.campaign=false;this.cars=GRID2026.slice(0,setupDrivers()).map(([id,name,code,teamId,pace,craft,cons],i)=>{
+  this.weekend={format:formatFor(CIRCUIT.key),idx:0,results:{}};this.sc={on:false,dist:0,speed:0,state:null,queue:[]};this.wx={rain:0,target:0,at:150,lineDry:0};this.decisions=[];this.teamRadio=[];this.commentary=[];this.fiaRadio=[];this.messages=[];this.stewardsQueue=[];this.filed=false;this.samples=[];this.replay=[];this.snapshots={};this.gridClear=false;this.pitExit=false;this.lights=0;this.greenLaps=0;this.greenStreak=0;this.lastLeaderLap=0;this.scTime=0;this.scLap=null;this.unlapLap=null;this.unlapAt=0;this.returnOrders=[];this.result=null;this.suspension=null;this.recovery=null;this.cars=GRID2026.slice(0,setupDrivers()).map(([id,name,code,teamId,pace,craft,cons],i)=>{
   const team=TEAMS.find(t=>t.id===teamId),second=GRID2026.findIndex(g=>g[2]===teamId)!==i;
   return{id,name,code,team:teamId,teamName:team.name,boxSlot:TEAMS.indexOf(team),boxU:.34+TEAMS.indexOf(team)*.030+(second?.012:0),
    colour:second?lighten(team.colour,.42):team.colour,
@@ -1119,7 +1119,6 @@ class RaceEngine{
   pitCar.pitState='HOLD';
   this.radio('RACE DIRECTOR',`All stations, formation readiness. ${this.tag(gridCar)} requires grid verification; ${this.tag(pitCar)} has anti-stall and will start from the pit lane.`);this.addIncident('grid','GRID ALIGNMENT',`${this.tag(gridCar)} front contact patch outside the marked grid-box tolerance. Review the overhead image; this is not proof of a jump-start.`,[gridCar.id]);}
  /* Load the authored production on demand. */
- rehearsal(on){this.campaign=!!on;return this.campaign;}
  random(){this.seed=(1664525*this.seed+1013904223)>>>0;return this.seed/4294967296;}
  car(id){return this.cars.find(c=>c.id===Number(id));}
  order(){return [...this.cars].sort((a,b)=>(a.status==='RETIRED')-(b.status==='RETIRED')||b.dist-a.dist);}
@@ -2204,57 +2203,6 @@ class RaceEngine{
  if(action==='finish'){if(this.phase!=='SUSPENDED')return deny('Suspend and assemble the cars in the pit lane before a non-resumption classification.');let ref=Math.max(0,this.suspension.lap-2);const snap=this.snapshots[ref];if(!snap)return deny('A complete timing snapshot for the countback lap is not available.');this.settlePostRace();this.result=this.classify(snap,ref,this.suspension.completed,this.suspension.greenLaps);this.enforceCompounds();this.fileResult();this.phase='FINISHED';this.paused=true;this.doc('Provisional classification',`Non-resumption: signal lap ${this.suspension.lap}; retained lap ${ref}; distance ${this.suspension.completed}/${this.totalLaps}; ${this.result.band}. Technical reviews remain open.`,'RESULT');return say(`The race will not resume. Publish the provisional classification at lap ${ref}. ${this.result.band}.`);}
  return deny('Command is not available in this state.');}
  classify(snapshot,ref,completed,green){const p=pointsFor(completed,this.totalLaps,green,this.isSprint);const leaderDistance=Math.max(...snapshot.map(x=>x.dist));let list=snapshot.map((s,i)=>{const c=this.car(s.id),owed=c.penalties.filter(x=>!x.served).reduce((a,x)=>a+x.seconds,0),laps=s.status==='RETIRED'?Math.floor(Math.max(0,s.dist)/LENGTH):Math.max(0,ref-Math.floor(Math.max(0,leaderDistance-s.dist)/LENGTH)),classified=laps>=Math.floor(ref*.9);return {...s,name:c.name,color:c.color,owed,laps,classified:classified&&!c.disqualified,dsq:!!c.disqualified,score:s.dist-owed*70};}).sort((a,b)=>b.score-a.score);let place=0;list=list.map(x=>({...x,position:x.classified?++place:null,points:x.classified?(p.points[place-1]??0):0}));return{rows:list,lap:ref,completed,percentage:completed/this.totalLaps*100,band:p.band,technicalPending:this.incidents.some(i=>i.type==='wing'&&i.status!=='NO ACTION')};}
- inject(n){if(this.triggers.has(n))return;this.triggers.add(n);this.scenario=n;if(n===2){
-  const [a,b]=this.pairInBattle();
-  this.cast.release=[a,b];this.cast.wing=a;
-  b.speed=15;a.wing=5.1;
-  this.addIncident('release',`UNSAFE RELEASE · ${a.id} / ${b.id}`,
-   `Overhead replay: ${this.tag(a)} crosses the fast lane at 21°. Clearance 0.62 s; ${this.tag(b)} brakes at 94%, 80 to 36 km/h. Scenario decision: five seconds following stewards review.`,[a.id,b.id]);
-  this.addIncident('wing',`WING DEFLECTION · ${a.id}`,
-   `Simulated rear-wing displacement 5.1 mm against a 3.0 mm scenario reference on ${this.tag(a)}. Dynamic estimate; physical test required.`,[a.id]);
-  this.rcm('INCIDENT',`UNSAFE RELEASE - ${this.tag(a)} AND ${this.tag(b)} - PIT LANE`,[a.id,b.id]);
-  this.radio('TEAM PRINCIPAL',`${b.teamName}: stop-and-go. You cannot send ${a.id} across our nose. ${b.name} had to stand on the brakes!`);
-  this.radio('TEAM PRINCIPAL',`${a.teamName}: there was sufficient gap. Our car was already committed.`);
-  this.radio('TELEMETRY & SCRUTINEER ENGINEER',`${this.tag(b)}: brake 94 percent. ${this.tag(a)} wing cue 5.1 millimetres; separate technical referral recommended.`);
- }
-
- if(n===3){
-  const [a,b]=this.pairInBattle();
-  this.cast.apex=[a,b];
-  a.dist=b.dist+18;
-  const turn=this.cornerAt(a.dist);
-  this.addIncident('apex',`APEX CONTACT · ${a.id} / ${b.id}`,
-   `Apex frame at turn ${turn}: ${this.tag(a)} front axle ahead by 0.8 m, but the exit vector crosses ${b.name}'s lane. No viable car width remains. ${a.name} releases brake early; ${b.name} steers away and leaves the white line. Ahead at the apex alone does not establish entitlement.`,[a.id,b.id]);
-  this.rcm('INCIDENT',`INCIDENT INVOLVING ${this.tag(a)} AND ${this.tag(b)} NOTED - TURN ${turn}`,[a.id,b.id]);
-  this.radio('TEAM PRINCIPAL',`${a.teamName}: we owned the line! ${a.name} was ahead at the apex!`);
-  this.radio('TEAM PRINCIPAL',`${b.teamName}: he pushed our driver off the circuit. Look at the exit vector!`);
-  this.radio('TELEMETRY & SCRUTINEER ENGINEER',`Synchronized frames show ${this.tag(a)} opening the steering and carrying the trajectory across ${this.tag(b)}.`);
- }
-
- if(n===4){
-  const c=this.midfielder();
-  this.cast.impact=c;
-  c.dist=Math.floor(this.leader.dist/LENGTH)*LENGTH+LENGTH*.55;
-  c.speed=0;c.status='RETIRED';c.impact=28;c.unlapTarget=null;c.pitRequested=false;
-  const turn=this.cornerAt(c.dist),sector=this.sectorAt(c.dist);
-  this.recovery={crashAt:this.time,medicalAt:null,medicalClear:false,repairAt:null,repaired:false};
-  for(const b of this.backmarkers(2))b.dist=this.leader.dist-LENGTH-120-(b===this.backmarkers(2)[1]?35:0),b.pitState=null;
-  this.addIncident('impact',`28 G IMPACT · TURN ${turn}`,
-   `${this.tag(c)} is stopped at the barrier at turn ${turn}. Cockpit intrusion channel: no positive trigger; confidence requires on-scene assessment. Debris and barrier condition unconfirmed.`,[c.id]);
-  this.rcm('INCIDENT',`${this.tag(c)} - STOPPED ON CIRCUIT - TURN ${turn}`,[c.id]);
-  this.radio('CHIEF MEDICAL OFFICER (CMO)',`Twenty-eight G alert on ${this.tag(c)}. Request immediate Medical Car dispatch and a protected route.`);
-  this.radio('DEPUTY DIRECTOR / MARSHAL LEAD',`Sector ${sector} obstruction and barrier damage at turn ${turn}. Marshals held behind protection.`);
- }
-
- if(n===5){
-  this.weather=.95;this.wx.rain=.95;this.wx.target=.95;this.liveWeather=false;
-  this.addIncident('weather','STANDING WATER · FULL COURSE',
-   'Simulated 8-14 mm water, 65 m visibility, widespread wheel-speed divergence. Aquaplaning reported even at reduced pace.',[]);
-  this.rcm('WEATHER','HEAVY STANDING WATER - FULL COURSE - AQUAPLANING RISK');
-  this.radio('SAFETY CAR DRIVER','Standing water across the circuit. Aquaplaning at reconnaissance pace. Visibility sixty-five metres.');
-  this.radio('DEPUTY DIRECTOR / MARSHAL LEAD','Drainage overwhelmed. Water across the usable track width.');
- }}
- checkpoint(n){const fresh=new RaceEngine(this.seed);Object.assign(this,fresh);this.paused=true;this.campaign=true;if(n===1)return;const laps={2:10,3:16,4:26,5:39};let lap=laps[n];this.phase='RACING';this.time=(lap-1)*92;this.startAt=0;this.gridClear=true;this.pitExit=true;this.incidents=[];this.events=[];this.lastLeaderLap=lap-1;this.greenLaps=lap-2;this.greenStreak=lap-2;this.cars.forEach((c,i)=>{c.dist=(lap-1)*LENGTH+LENGTH*.15-i*34;c.speed=lerpArr(VPROF,c.dist)*.92;c.pitState=null;});for(let k=Math.max(0,lap-4);k<lap;k++)this.snapshots[k]=this.order().map((c,i)=>({id:c.id,dist:k*LENGTH-i*34,status:c.status}));for(let k=2;k<n;k++)this.triggers.add(k);if(n>=3){const w=this.midfielder();this.cast.wing=w;w.penalties=[{kind:'time5',seconds:5,served:true,time:this.time-500}];w.wing=5.1;this.addIncident('wing',`WING DEFLECTION · ${w.id}`,`Earlier dynamic cue on ${this.tag(w)} retained for post-race physical inspection.`,[w.id]).status='POST-RACE';}if(n===5){const r=this.midfielder();this.cast.impact=r;r.status='RETIRED';r.dist=30*LENGTH;for(const k of Object.keys(this.snapshots))this.snapshots[k]=this.snapshots[k].map(c=>c.id===27?{...c,status:'RETIRED',dist:30*LENGTH}:c);}this.inject(n);this.radio('RACE DIRECTOR','Checkpoint loaded and paused. Review the situation, then press Run.');}
  step(dt){if(this.paused||this.phase==='FINISHED')return;dt=Math.min(dt,.25);this.time+=dt;
  if(this.recovery){const r=this.recovery;if(r.medicalAt!=null&&!r.medicalClear&&this.time-r.medicalAt>45){r.medicalClear=true;this.radio('CHIEF MEDICAL OFFICER (CMO)','Driver transferred to medical care. Work area released to recovery; assessment continues.');}if(r.repairAt!=null&&!r.repaired&&this.time-r.repairAt>75){r.repaired=true;this.radio('DEPUTY DIRECTOR / MARSHAL LEAD','Barrier repair inspected. Vehicle, debris, tools and all personnel clear. Circuit released.');this.doc('Circuit release','Barrier inspected and all personnel clear of the protected work zone.');}}
  if(this.phase==='FORMATION'){this.cars.forEach((c,i)=>{if(c.id!==45){c.dist=(this.time-this.phaseAt)/22*LENGTH-i*11;c.speed=LENGTH/22;}});if(this.time-this.phaseAt>=22){this.phase='GRID';this.cars.forEach((c,i)=>{c.dist=-i*9;c.speed=0;c.lat=c.lane=(i%2?1:-1)*2.6;c.latV=0;});this.radio('DEPUTY DIRECTOR / MARSHAL LEAD',`Grid formed. ${this.cast.grid?this.tag(this.cast.grid):'One car'} requires final alignment verification.`);}this.record();return;}
@@ -2648,12 +2596,6 @@ class RaceEngine{
  const completed=Math.floor(Math.max(0,this.leader.dist)/LENGTH);if(completed>this.lastLeaderLap){for(let k=this.lastLeaderLap+1;k<=completed;k++)this.snapshots[k]=this.order().map(c=>({id:c.id,dist:c.dist,status:c.status}));this.lastLeaderLap=completed;if(this.flag==='GREEN'){this.greenStreak++;this.greenLaps=Math.max(this.greenLaps,this.greenStreak);}else this.greenStreak=0;if(completed>=this.totalLaps&&this.phase==='RACING'){this.settlePostRace();this.result=this.classify(this.snapshots[completed],completed,completed,this.greenLaps);this.enforceCompounds();this.fileResult();this.phase='FINISHED';this.paused=true;this.doc('Provisional race classification','Scheduled distance completed. Outstanding penalties applied; technical review remains separate.','RESULT');this.radio('RACE DIRECTOR','Chequered flag. Race distance complete.');
    for(const r of this.result.rows.slice(0,6)){const car=this.car(r.id);
     if(car)this.say(car,'finish','DRIVER',{pos:r.position,urgent:1});}}}
- /* The five authored scenarios are the training production: the same unsafe
-    release on lap 12, the same apex contact on 19, the same crash on 31, the
-    same downpour on 47, every time. That is what a rehearsal is for, and it
-    is not what a race is - so it only runs when a checkpoint has been loaded
-    on purpose. An ordinary race has to earn its incidents. */
- if(this.campaign&&this.phase==='RACING'){for(const[n,lap]of[[2,12],[3,19],[4,31],[5,47]])if(this.lap>=lap)this.inject(n);}
  this.record();}
  record(){if(!this.nextSample||this.time>=this.nextSample){this.nextSample=this.time+.5;for(const c of this.cars){c.history.push({speed:c.speed*3.6,brake:c.brake,throttle:c.throttle,steer:c.steer,ers:c.decision==='Attack'?250:90});if(c.history.length>70)c.history.shift();}this.replay.push({time:this.time,cars:this.cars.map(c=>({id:c.id,name:c.name,dist:c.dist,lane:c.lane,heading:c.heading,color:c.color,status:c.status,pitState:c.pitState})),flag:this.flag});if(this.replay.length>160)this.replay.shift();}}
 }
@@ -3372,7 +3314,7 @@ function results(){if(!sim.result)return toast('No classification has been gener
 document.addEventListener('click',e=>{if(e.target.id==='set-apply')return applySetup();if(e.target.id==='set-import')return $('#set-file').click();const car=e.target.closest('[data-car]');if(car){selected=Number(car.dataset.car);$('#car-select').value=selected;render();}const tab=e.target.closest('[data-tab]');if(tab){$('.deck').dataset.view=tab.dataset.tab;document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b===tab));}const i=e.target.closest('[data-incident]');if(i)review(i.dataset.incident);const dismiss=e.target.closest('[data-dismiss]');if(dismiss){const r=sim.command('dismiss',dismiss.dataset.dismiss);toast(r.message);$('#modal').close();render();}const cmd=e.target.closest('[data-command]');if(cmd){const a=cmd.dataset.command;if(a==='review')review();else if(a==='results')results();else{const r=sim.command(a,16);toast(r.message);if(r.ok&&$('#modal').open)$('#modal').close();if(a==='finish'&&r.ok)results();render();}}if(e.target.id==='export-season'||e.target.id==='set-export')download((season.setup&&season.setup.name||'aegis-season').replace(/[^\w-]+/g,'-').toLowerCase()+'.json',JSON.stringify(season,null,2),'application/json');
  if(e.target.id==='clear-season'){season={races:[]};saveSeason();championship();toast('Season cleared.');}
  if(e.target.id==='download-script')download('race-control-production-script.txt',scriptText());if(e.target.id==='download-results')download('race-control-results.json',JSON.stringify({result:sim.result,documents:sim.documents},null,2),'application/json');});
-$('#play').onclick=()=>{if(sim.phase==='FORMATION_READY')sim.command('formation');else sim.paused=!sim.paused;render();};$('#rate').onchange=e=>sim.rate=Number(e.target.value);$('#load').onclick=()=>{const rate=sim.rate;sim.checkpoint(Number($('#scenario').value));sim.rate=rate;replayLive=true;$('#replay').value=159;render();toast('Scenario checkpoint loaded and paused. Press Run when ready.');};$('#weather').oninput=e=>{
+$('#play').onclick=()=>{if(sim.phase==='FORMATION_READY')sim.command('formation');else sim.paused=!sim.paused;render();};$('#rate').onchange=e=>sim.rate=Number(e.target.value);$('#weather').oninput=e=>{
  /* Taking the slider means taking control of the sky. */
  sim.liveWeather=false;sim.weather=Number(e.target.value)/100;
  sim.wx.rain=sim.weather;sim.wx.target=sim.weather;sim.wx.at=600;
@@ -3505,7 +3447,6 @@ $('#circuit').onchange=e=>{
  radarBuilt=false;carNodes.clear();W3=null;W3key=null;camPrev=null;
  sim=new RaceEngine();
  selected=16;compare=55;replayLive=true;$('#replay').value=159;
- $('#scenario').value='1';
  render();
  toast(`${CIRCUIT.name} loaded · ${CIRCUIT.km.toFixed(3)} km, ${CIRCUIT.laps} laps. Reference lap ${laptime(REFLAP)}.`);
 };
