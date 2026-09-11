@@ -1350,6 +1350,11 @@ class RaceEngine{
    this.driver(other,'He is in the wall. I think that is a safety car.',true);
   }
   this.rcm('INCIDENT',`CONTACT BETWEEN ${this.tag(a)} AND ${this.tag(b)} - TURN ${turn} - LAP ${this.lap}`,[a.id,b.id]);
+  this.comment(kind==='heavy'
+   ?`Huge accident at turn ${turn}! ${guilty.name} is in the barrier after contact with ${other.name}, and that looks like the end of his race.`
+   :kind==='spin'
+   ?`Contact at turn ${turn}! ${guilty.name} is spun round by ${other.name} - he keeps the engine running but he has lost a stack of places.`
+   :`They have touched at turn ${turn}, ${a.name} and ${b.name}. ${b.name} has picked up front wing damage from that.`,[a.id,b.id]);
   /* The one who came off worst has every right to be furious about it. */
   this.anger(other,kind==='heavy'?.55:kind==='spin'?.42:.26,`contact with ${this.tag(guilty)} at turn ${turn}`);
   this.anger(guilty,.08,`contact at turn ${turn}`);
@@ -1652,7 +1657,7 @@ class RaceEngine{
     the gap, the lap and where on the circuit it happened. */
  comment(text,cars){
   this.commentary.unshift({time:this.time,lap:this.lap,text,cars:cars||[]});
-  if(this.commentary.length>160)this.commentary.length=160;
+  if(this.commentary.length>300)this.commentary.length=300;
  }
  commentTick(dt){
   if(this.phase!=='RACING'||this.flag!=='GREEN')return;
@@ -1686,11 +1691,12 @@ class RaceEngine{
      /* A pair that was just reported does not get reported again the moment
         they come back into range. */
      const seen=(this.fightSeen=this.fightSeen||new Map()).get(kk)||0;
-     f={start:this.time,since:this.time-seen<150?this.time:null,told:0};
+     const recent=this.time-seen<420;
+     f={start:this.time,since:recent?this.time:null,told:0,silent:recent};
      this.fights.set(kk,f);
     }
     /* Five seconds of it and it is worth talking about. */
-    if(!f.since&&this.time-f.start>=5){
+    if(!f.since&&this.time-f.start>=5&&i<10){
      f.since=f.start;
      (this.fightSeen=this.fightSeen||new Map()).set(kk,this.time);
      queue.push({pri:1,pos:i,cars:[a.id,b.id],text:this.vary(b,'fight',[
@@ -1701,7 +1707,7 @@ class RaceEngine{
     /* And if it goes on and on, that is a story of its own. */
     /* A long stalemate is only worth mentioning near the front, and not
        often - it is one story, not one every lap. */
-    else if(i<8&&f.since&&this.time-f.since>75&&this.time-(f.told||0)>220){
+    else if(i<8&&f.since&&!f.silent&&this.time-f.since>75&&this.time-(f.told||0)>220){
      f.told=this.time;
      queue.push({pri:2,pos:i,cars:[a.id,b.id],text:this.vary(b,'grind',[
        `${b.name} still cannot find a way past ${a.name}. That is ${Math.round((this.time-f.since)/60)} minute${this.time-f.since>=120?'s':''} of this now.`,
@@ -1713,6 +1719,25 @@ class RaceEngine{
   /* A commentator says one thing at a time, and says the most interesting
      thing: a move before a fight, and a fight at the front before one at the
      back. Everything else that happened in the same breath is dropped. */
+  /* The lead changing hands, and the last lap starting, are both worth a
+     word whoever is involved. */
+  /* The lead changing on the road is a moment. The lead changing because the
+     man in front went for tyres is not, so a car that has been in the pit
+     lane in the last minute does not count as taking it. */
+  const ldr=order[0];
+  if(ldr&&this.lead!==ldr.id){
+   const old=this.car(this.lead);
+   const cycle=(c2)=>!c2||c2.pitState||this.time-(c2.stopAt||-1e9)<70;
+   if(this.lead!=null&&!cycle(ldr)&&!cycle(old))
+    queue.push({pri:0,pos:-1,cars:[ldr.id],
+      text:`${ldr.name} leads the Grand Prix! Through on ${old?old.name:'the leader'} on lap ${this.lap}.`});
+   this.lead=ldr.id;
+  }
+  if(this.totalLaps-this.lap<=0&&!this.saidLast&&this.phase==='RACING'){
+   this.saidLast=true;
+   queue.push({pri:0,pos:-1,cars:ldr?[ldr.id]:[],
+     text:`Last lap. ${ldr?ldr.name+' leads it':'The leader is on his way'} and there is everything still to play for behind.`});
+  }
   if(queue.length){
    queue.sort((x,y)=>x.pri-y.pri||x.pos-y.pos);
    const top=queue[0];
@@ -1908,6 +1933,7 @@ class RaceEngine{
    carryPenalty(c.id,'grid',places,offence);
   }else if(kind==='dsq'){
    c.status='RETIRED';c.speed=0;c.disqualified=true;
+   this.comment(`${c.name} is disqualified. ${offence?offence.toLowerCase().replace(/^\w/,m=>m.toUpperCase()):'Excluded from the results'}.`,[c.id]);
   }else{
    c.penalties.push({kind,seconds:kind==='time10'?10:kind==='time5'?5:0,served:false,time:this.time});
    if(kind==='drivethrough'||kind==='stopgo'){c.mustPitBy=this.lap+3;c.pitRequested=true;c.servingPenalty=kind;}
@@ -1926,6 +1952,10 @@ class RaceEngine{
    +(kind==='drivethrough'?' The car must enter the pit lane and pass through without stopping within three laps.':'')
    +(kind==='stopgo'?' The car must stop in its box for ten seconds with no work carried out.':''),'DECISION');
   this.pitWall(c,`${label.toLowerCase()}. We will deal with it.`,true);
+  this.comment(this.vary(c,'pen',[
+    `The stewards have handed ${c.name} a ${label.toLowerCase()}${offence?' for '+offence.toLowerCase():''}. That will hurt.`,
+    `${label} for ${c.name}${offence?' - '+offence.toLowerCase():''}. He will not be happy about that one.`,
+    `Decision from the stewards: ${c.name}, ${label.toLowerCase()}. It changes his afternoon.`]),[c.id]);
   const L=ledgerFor(c.id);
   if(L.suspended)this.doc('Notice · '+this.tag(c),
    `Twelve penalty points reached; ${c.name} is suspended for the next event and will not take part.`,'NOTICE');
@@ -2187,6 +2217,7 @@ class RaceEngine{
  if(['GREEN','YELLOW','VSC','SC','RED'].includes(action)){if(!['RACING','SC_RESTART','RED_RETURN','SUSPENDED'].includes(this.phase))return deny('Start or resumption procedure is required.');if(action==='GREEN'&&(this.flag==='SC'||this.flag==='RED'||this.recovery&&!this.recovery.repaired))return deny('Complete the recovery and restart procedure first.');if(this.recovery&&!this.recovery.repaired&&['YELLOW','VSC'].includes(action))return deny('Full Safety Car or red flag is required while this recovery remains unsafe.');if(this.flag==='RED'&&action!=='RED')return deny('Use the assessed resumption procedure.');if(action==='SC'){if(this.flag!=='SC'){this.scTime=this.time;this.scLap=this.lap;}if(!this.sc.on){const L=this.leader;
     this.sc={on:true,dist:(L?L.dist:0)+50,speed:40,state:'leading',queue:[]};
     this.rcm('SAFETY CAR','SAFETY CAR DEPLOYED');}
+  this.comment('Safety Car, Safety Car. The field will bunch up behind it and every gap on the board has just gone.');
    this.flag='SC';this.answer('impact','neutralised');this.doc('Safety Car deployed','Full-course yellow and SC panels. No overtaking.');return say('SAFETY CAR DEPLOYED. Reduce speed and form the queue.');}if(action==='RED'){if(this.flag==='RED')return deny('The race is already suspended.');this.suspension={lap:this.lap,completed:this.lap-1,time:this.time,greenLaps:this.greenLaps,order:this.order().map(c=>({id:c.id,dist:c.dist,status:c.status}))};this.sc={on:false,dist:0,speed:0,state:null,queue:[]};
    for(const c of this.cars)c.redPitted=!!c.pitState;
    this.flag='RED';this.answer('impact','neutralised');this.answer('weather','suspended');this.phase='RED_RETURN';this.phaseAt=this.time;this.pitExit=false;this.doc('Race suspended',`Red signal on lap ${this.lap}; ${this.lap-1} completed. Freeze timing and return slowly to the pit lane.`);this.radio('TEAM PRINCIPAL - TEAM A','If we restart, we want a standing start. We lost position through strategy!');this.radio('TEAM PRINCIPAL - TEAM B','Rolling if it clears, or end it. We have passed seventy-five percent!');return say('RED FLAG. No overtaking. Return slowly to the pit lane. Points do not decide whether the circuit is safe.');}this.flag=action;this.doc(action+' flag','Signal issued to all marshal posts and teams.');return say(action+' flag. All posts acknowledge.');}
@@ -2362,9 +2393,20 @@ class RaceEngine{
       the old form took a slice off every car in turn, so twenty-two of them
       arriving at a slow corner compounded into a standstill - the field
       would stop dead in a heap at the first corner and shuffle. */
-   if(!alongside){
+   /* Nobody's foot comes off the clutch at the same instant. A tenth or two
+      of reaction, steadier drivers quicker off the mark. */
+   if(this.startAt&&this.time-this.startAt<(c.reaction??(c.reaction=.06+(1-c.steadiness)*.26)))
+    target=Math.min(target,1.2);
+   /* A following distance only applies to cars that are following. At a
+      standing start every car launches for itself the instant the lights go
+      out - holding each one to the car ahead sends a ripple down the grid
+      and the field leaves one at a time, which is not what a start looks
+      like. Until both are rolling the only rule is not driving into the back
+      of anybody. */
+   const rolling=c.speed>8&&ahead.speed>8;
+   if(!alongside&&(rolling||gapAhead<7)){
     const pf=Math.pow(PASSY,1.5);
-    const want=6.5+5.5*(1-pf);
+    const want=rolling?6.5+5.5*(1-pf):5.5;
     if(gapAhead<want*2.4)target=Math.min(target,ahead.speed+(gapAhead-want)*.85);
    }
    /* Alongside is not past. Whoever has the inside for the corner coming up
@@ -2583,6 +2625,13 @@ class RaceEngine{
    if(c.lapAt!=null&&c.lapValid&&Math.abs(ran-LENGTH)<LENGTH*.02){
     c.lastLap=this.time-c.lapAt;
     if(!c.bestLap||c.lastLap<c.bestLap)c.bestLap=c.lastLap;
+    /* The fastest lap of the race so far, which is only news when it is. */
+    if(this.lap>3&&(!this.fastestOfRace||c.lastLap<this.fastestOfRace.t-.001)){
+     const prev=this.fastestOfRace;
+     this.fastestOfRace={id:c.id,t:c.lastLap};
+     if(prev&&prev.id!==c.id)this.comment(
+      `${c.name} takes fastest lap off ${(this.car(prev.id)||{}).name} - ${laptime(c.lastLap)}, and he is the quickest man on the circuit right now.`,[c.id]);
+    }
    }
    c.lapAt=this.time;c.lapFrom=c.dist;c.lapValid=!c.pitState;c.tyreAge++;
   }
@@ -2594,6 +2643,22 @@ class RaceEngine{
 
  for(const o of [...this.returnOrders]){const c=this.car(o.car);if(c.dist>o.deadline){c.returnTo=null;this.returnOrders=this.returnOrders.filter(x=>x!==o);this.doc('Unresolved advantage referred',`Car ${c.id} did not complete the position return within one lap. Ten-second scenario recommendation referred; a stewards decision is still required.`,'REFERRAL');this.radio('RACE DIRECTOR',`Car ${c.id} missed the return deadline. Refer to the stewards with the ten-second scenario recommendation.`);}}
  const completed=Math.floor(Math.max(0,this.leader.dist)/LENGTH);if(completed>this.lastLeaderLap){for(let k=this.lastLeaderLap+1;k<=completed;k++)this.snapshots[k]=this.order().map(c=>({id:c.id,dist:c.dist,status:c.status}));this.lastLeaderLap=completed;if(this.flag==='GREEN'){this.greenStreak++;this.greenLaps=Math.max(this.greenLaps,this.greenStreak);}else this.greenStreak=0;if(completed>=this.totalLaps&&this.phase==='RACING'){this.settlePostRace();this.result=this.classify(this.snapshots[completed],completed,completed,this.greenLaps);this.enforceCompounds();this.fileResult();this.phase='FINISHED';this.paused=true;this.doc('Provisional race classification','Scheduled distance completed. Outstanding penalties applied; technical review remains separate.','RESULT');this.radio('RACE DIRECTOR','Chequered flag. Race distance complete.');
+   {const rows=this.result.rows.filter(r=>r.position);
+    const w=rows[0],n2=rows[1],n3=rows[2];
+    if(w){
+     /* The margin is the distance between them at the flag over the speed
+        they were doing, not the penalty-weighted score the order is sorted
+        on - those are different numbers. */
+     const wc=this.car(w.id),sc2=n2?this.car(n2.id):null;
+     const margin=(wc&&sc2)?Math.abs(wc.dist-sc2.dist)/Math.max(25,wc.speed):0;
+     const lapped=n2&&Math.abs(wc.dist-sc2.dist)>LENGTH;
+     this.comment(`Chequered flag! ${w.name} wins the ${CIRCUIT.event.toLowerCase().replace(/\b\w/g,m=>m.toUpperCase())}`
+      +(n2?(lapped?`, a lap clear of ${n2.name}`:`, ${margin>0.7?margin.toFixed(1)+' seconds':'by a nose'} ahead of ${n2.name}`):'')
+      +(n3?`, with ${n3.name} completing the podium.`:'.'),[w.id].concat(n2?[n2.id]:[]));
+     const dnf=this.cars.filter(x=>x.status==='RETIRED').length;
+     this.comment(`${this.result.completed} laps, ${dnf} retirement${dnf===1?'':'s'}`
+      +(this.fastestOfRace?`, and the fastest lap goes to ${(this.car(this.fastestOfRace.id)||{}).name} with a ${laptime(this.fastestOfRace.t)}.`:'.'),[]);
+    }}
    for(const r of this.result.rows.slice(0,6)){const car=this.car(r.id);
     if(car)this.say(car,'finish','DRIVER',{pos:r.position,urgent:1});}}}
  this.record();}
@@ -3834,7 +3899,7 @@ function trackside(ctx,dist0){
  }
 }
 /* --------------------------------- SCENE --------------------------------- */
-let view3='plan',camPrev=null,stageCtx=null,cornerCam=null;
+let view3='plan',camPrev=null,stageCtx=null,cornerCam=null,camLane=null;
 function stageSize(){
  const el=$('#scene'),host=$('#stage');
  if(!el||!host)return false;
@@ -4077,13 +4142,18 @@ function drawCar(ctx,c,dist0){
 
 /* -------------------------------- CAMERAS -------------------------------- */
 function placeCam(c){
+ /* The camera does not follow the car's lateral twitch. A driver moves about
+    inside the lane constantly - defending, taking a line, correcting - and a
+    camera rigidly tied to that swings the whole circuit from side to side.
+    It follows a heavily damped version of where the car is across the road. */
+ camLane=camLane==null?(c.lane??0):camLane+((c.lane??0)-camLane)*.045;
  const a=w3(c.dist,c.lane??0);
- const lead=w3(c.dist+24,(c.lane??0)*.9);
+ const lead=w3(c.dist+24,camLane*.9);
  if(view3==='onboard'){
   const eye=[a.x+a.tx*.9,a.y+a.ty*.9,a.z+1.08];
   const look=[lead.x,lead.y,lead.z+.75];
-  const roll=clamp(-(c.latV||0)*.045,-.09,.09);
-  smoothCam(eye,look,roll,.55);
+  const roll=clamp(-(c.latV||0)*.035,-.07,.07);
+  smoothCam(eye,look,roll,.05,.16);
  }else if(view3==='corner'){
   /* The nearest camera position ahead of the car, at the corner it is
      coming to - which is where a trackside camera actually lives. */
@@ -4097,27 +4167,38 @@ function placeCam(c){
   const p=w3(cd+18,0);
   const side=(best&&best.frac!==undefined&&lerpArr(kcen,cd)>0)?-1:1;
   const eye=[p.x+p.nx*side*30,p.y+p.ny*side*30,8.5];
-  smoothCam(eye,[a.x,a.y,a.z+.6],0,.22);
+  smoothCam(eye,[a.x,a.y,a.z+.6],0,.30,.30);
   cornerCam=best?best.n:null;
  }else{
-  const back=w3(c.dist-14.5,(c.lane??0)*.95);
-  const near=w3(c.dist+7,(c.lane??0));
+  const back=w3(c.dist-14.5,camLane*.9);
+  const near=w3(c.dist+7,camLane);
   const eye=[back.x,back.y,back.z+3.6];
   const look=[near.x*.62+lead.x*.38,near.y*.62+lead.y*.38,near.z+1.05];
   smoothCam(eye,look,clamp(-(c.latV||0)*.02,-.05,.05),.30);
  }
 }
-function smoothCam(eye,look,roll,lag){
- if(!camPrev||camPrev.key!==view3+CIRCUIT.key){camPrev={e:eye.slice(),l:look.slice(),key:view3+CIRCUIT.key};}
- const f=Math.min(1,lag*(sim.paused?1:1));
- /* A long jump means the car crossed the line or was moved; snap rather than
-    fly across the circuit. */
+/* Smoothing has to be in seconds, not in frames. A fixed fraction per frame
+   means the camera lags differently at thirty frames a second than at a
+   hundred and forty, and at high simulation rates the target moves so far
+   between frames that the whole picture shakes. An exponential with a time
+   constant behaves the same whatever the frame rate. */
+let camLast=0;
+function smoothCam(eye,look,roll,tauE,tauL){
+ const now=performance.now();
+ let dt=(now-camLast)/1000; camLast=now;
+ if(!(dt>0)||dt>.5)dt=1/60;
+ if(!camPrev||camPrev.key!==view3+CIRCUIT.key)
+  camPrev={e:eye.slice(),l:look.slice(),r:roll,key:view3+CIRCUIT.key};
+ /* Crossing the start line moves the car a lap's worth of distance in one
+    step; snap rather than fly the length of the circuit. */
  const jump=Math.hypot(eye[0]-camPrev.e[0],eye[1]-camPrev.e[1])>90;
+ const fe=jump?1:1-Math.exp(-dt/tauE), fl=jump?1:1-Math.exp(-dt/tauL);
  for(let i=0;i<3;i++){
-  camPrev.e[i]=jump?eye[i]:camPrev.e[i]+(eye[i]-camPrev.e[i])*f;
-  camPrev.l[i]=jump?look[i]:camPrev.l[i]+(look[i]-camPrev.l[i])*f;
+  camPrev.e[i]+=(eye[i]-camPrev.e[i])*fe;
+  camPrev.l[i]+=(look[i]-camPrev.l[i])*fl;
  }
- aimCam(camPrev.e[0],camPrev.e[1],camPrev.e[2],camPrev.l[0],camPrev.l[1],camPrev.l[2],roll);
+ camPrev.r+=(roll-camPrev.r)*(jump?1:1-Math.exp(-dt/.22));
+ aimCam(camPrev.e[0],camPrev.e[1],camPrev.e[2],camPrev.l[0],camPrev.l[1],camPrev.l[2],camPrev.r);
 }
 function drawStage(){
  if(view3==='plan')return;
@@ -4160,7 +4241,7 @@ function setView(v){
  $('#radar').hidden=v!=='plan';
  $('#stage').hidden=v==='plan';
  for(const b of document.querySelectorAll('#viewset button'))b.classList.toggle('on',b.dataset.view===v);
- camPrev=null;
+ camPrev=null;camLane=null;
  if(v!=='plan'){if(!W3||W3key!==CIRCUIT.key)build3D();drawStage();}
  else radar();
 }
