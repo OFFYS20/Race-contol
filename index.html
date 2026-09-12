@@ -26,6 +26,11 @@ color-scheme:light;font-family:"IBM Plex Sans",system-ui,-apple-system,sans-seri
  font:600 .6875rem/1.45 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#EDEBE3;
  text-shadow:0 1px 3px #000;pointer-events:none}
 .stage-hud #hud-speed{font-size:1.5rem;letter-spacing:.02em}
+@media (max-width:620px){
+ .stage-hud{font-size:.5625rem;gap:1px}
+ .stage-hud #hud-speed{font-size:1.05rem}
+ .stage-bars{height:54px;right:8px;bottom:8px}
+}
 .stage-hud #hud-driver{color:#9C9A90}
 .stage-bars{position:absolute;right:12px;bottom:12px;display:flex;gap:5px;align-items:flex-end;height:78px;pointer-events:none}
 .stage-bars i{width:9px;background:#2A2F38;border-radius:2px;align-self:flex-end;display:block}
@@ -3441,6 +3446,9 @@ window.addEventListener('resize',()=>{if(view3!=='plan')drawStage();});$('#repla
 <h3>Overtaking</h3><p>How hard it is to pass is measured from each circuit rather than set by hand: the share of the lap spent at full throttle and the number of DRS zones give a passability figure, and Monaco comes out at 0.18 where Monza and Melbourne are near 1.0. That figure then drives everything else. Dirty air costs a following car time where it was leaning on downforce &mdash; through the corners &mdash; and the cost rises sharply as passability falls, which is the difference between a circuit where a follower can live in the gearbox and one where the afternoon is a procession.</p>
 <p>A move has to be made properly. Being alongside is a car's width of separation with the front axle at least at the other car's rear; anything less is behind, and behind does not get the corner. Whoever has the inside for the corner coming up has the corner, so a driver who has drawn level around the outside must either make it stick through the exit or fall back in behind &mdash; which is why moves end up back where they started. And a driver with someone in their mirrors covers the line into the corner, which costs them the exit: that is the switchback the car behind is waiting for.</p>
 <h3>Commentary</h3><p>The <b>Commentary</b> channel is somebody watching the race. It has two subjects, because they are the two that matter: a fight that has lasted long enough to be one &mdash; five seconds inside a second and a half &mdash; and a move that actually gets done. It names both drivers, the gap, the lap and the corner, it says how long the car behind had been trying, and it says one thing at a time: a move before a fight, and a fight at the front before one at the back. A stalemate near the front is mentioned once in a while rather than every lap.</p>
+<h3>The 3D stage</h3><p>Three cameras. <b>Chase</b> sits eleven and a half metres behind the selected car at a fixed offset along the road &mdash; the distance is not filtered, because distance along a circuit is already smooth and filtering it only lets the lens drift into the car. <b>Onboard</b> is the T-camera above the airbox looking over the nose, which is the shot every onboard actually is; an eye at helmet height sits so close to the asphalt that the picture is all road. <b>Corner</b> is a trackside camera standing twenty metres off the outside of whatever the car is going through, named for the nearest turn.</p>
+<p>What makes the geometry read as solid is a light: every face is shaded by how it is turned against a key direction, with a dimmer fill and a little sky from above, and every car lays a shadow on the road. The cars are built as cars &mdash; a narrow survival cell, sidepods lower and wider with an undercut, a nose on a raised chassis tapering to a two-plane front wing with endplates, a helmet inside the halo, four wheels standing proud with rim faces, and the rear wing on its pylon &mdash; dropping to three boxes past ninety-five metres, because drawing sixty faces for four pixels is waste.</p>
+<p>The road carries rubber on the racing line, a little grain so it is not one flat plane, the hundred, fifty and twenty-five boards on the way into every heavy braking zone, and the sector and DRS markings. At a night circuit there are stars. The lens opens up with speed, which is the oldest trick there is for making speed feel like speed. It holds sixty frames a second on a phone.</p>
 <h3>Track width</h3><p>Each circuit carries its real width in metres, from nine at Monaco to fifteen at Monza and Las Vegas. A lateral unit is worth fewer metres on a narrow road, so two cars need to be further apart in those units to have a car's width between them &mdash; which on a nine-metre street is most of the road. A move also has to have somewhere to happen: being alongside only counts into a real braking zone or with the flap open, because a driver alongside in the middle of a wall-lined sweep is not overtaking.</p>
 <h3>Team radio</h3><p>Radio is two people talking under pressure, so it names the rival, gives the real gap, says how old the other car's tyres are, and sounds different depending on who is on the button. Every situation has several ways of being said and a driver never uses the same one twice in a row. The pit wall calls gaps, DRS windows, fuel targets and strategy; the driver answers, complains about the rears, apologises for a mistake, and is audibly less patient the longer the afternoon goes on.</p>
 <h3>Championship setup</h3><p>A season does not have to be all twenty-four rounds with all twenty-two cars. <b>Championship setup</b> sets the length, the size of the field and the name, and a shorter championship runs the first rounds of the real calendar in their real order. Changing the length or the field clears what has been filed, because a table built from twenty-two cars over twenty-four rounds is not the same championship as one built from ten over six. Everything &mdash; results, points, Super Licence points, reprimands, grid penalties owed &mdash; exports to a file you can keep or move to another machine, and import puts it back.</p>
@@ -3611,6 +3619,31 @@ function proj(x,y,z){
 /* A quad only reaches the screen if enough of it is in front of the lens; a
    near-plane clip on each edge keeps a corner behind the camera from folding
    the polygon inside out. */
+/* ------------------------------- LIGHTING -------------------------------
+   Flat fills make a box look like a sticker. A surface normal against a key
+   light, a dimmer fill from the opposite side and a little sky from above
+   is enough to make the same geometry read as an object with sides. */
+const LIGHT={x:.38,y:-.52,z:.76};
+(function(){const L=Math.hypot(LIGHT.x,LIGHT.y,LIGHT.z);LIGHT.x/=L;LIGHT.y/=L;LIGHT.z/=L;})();
+function normOf(a,b,c){
+ const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2];
+ const vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2];
+ const nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx;
+ const L=Math.hypot(nx,ny,nz)||1;
+ return[nx/L,ny/L,nz/L];
+}
+const RGB=h=>{const n=parseInt(h.slice(1),16);return[n>>16&255,n>>8&255,n&255];};
+/* Shade a colour by how a face is turned relative to the key light. */
+function shadeFace(hex,a,b,c){
+ if(hex[0]!=='#')return hex;
+ const n=normOf(a,b,c);
+ const d=Math.abs(n[0]*LIGHT.x+n[1]*LIGHT.y+n[2]*LIGHT.z);
+ const sky=Math.max(0,n[2])*.22;
+ const night=scenery().night?.72:1;
+ const k=(.54+.64*d+sky)*night;
+ const [r,g,bl]=RGB(hex);
+ return `rgb(${Math.min(255,r*k)|0},${Math.min(255,g*k)|0},${Math.min(255,bl*k)|0})`;
+}
 function quad(ctx,a,b,c,d,fill){
  const P=[a,b,c,d].map(p=>proj(p[0],p[1],p[2]));
  if(P.some(q=>!q)){
@@ -3910,10 +3943,28 @@ function stageSize(){
   el.width=Math.round(w*dpr);el.height=Math.round(h*dpr);
   el.style.height=h+'px';
  }
- VW3=w;VH3=h;FOCAL=(w/2)/Math.tan((view3==='onboard'?58:50)*Math.PI/360);
+ VW3=w;VH3=h;
+ /* The lens opens up as the car goes quicker. It is the oldest trick there
+    is for making speed feel like speed, and it is what a broadcast camera
+    looks like too. */
+ const sp=sim.car(selected)?sim.car(selected).speed*3.6:0;
+ const widen=clamp((sp-90)/240,0,1)*(view3==='onboard'?9:7);
+ FOCAL=(w/2)/Math.tan(((view3==='onboard'?56:48)+widen)*Math.PI/360);
  stageCtx=el.getContext('2d');
  stageCtx.setTransform(dpr,0,0,dpr,0,0);
  return true;
+}
+function stars(ctx){
+ if(!scenery().night)return;
+ /* Fixed to the world, not the screen, so they hold still as the car turns. */
+ for(let i=0;i<90;i++){
+  const a=i/90*TAU*7.3, r=380+((i*37)%9)*60;
+  const p=proj(cam.x+Math.cos(a)*1800,cam.y+Math.sin(a)*1800,r);
+  if(!p||p.y>VH3*.52)continue;
+  const m=(i%5)/5;
+  ctx.fillStyle=`rgba(226,232,244,${(.20+m*.42).toFixed(2)})`;
+  ctx.fillRect(p.x,p.y,1.2+m,1.2+m);
+ }
 }
 function skyline(ctx){
  const hz=VH3/2 - (cam.uz>0? 0:0);
@@ -3962,7 +4013,10 @@ function skylineFar(ctx){
 }
 function haze(ctx){
  const hz=proj(cam.x+cam.fx*2200,cam.y+cam.fy*2200,0);
- const y=hz?clamp(hz.y,0,VH3):VH3*.5;
+ /* The horizon can project to nothing at all if the camera is looking away
+    from the plane; a gradient built on that throws. */
+ let y=(hz&&isFinite(hz.y))?clamp(hz.y,0,VH3):VH3*.5;
+ if(!isFinite(y)||!isFinite(VH3)||VH3<=0)return;
  const g=ctx.createLinearGradient(0,y-VH3*.18,0,y+VH3*.10);
  const wet=sim.weather;
  g.addColorStop(0,wet>.3?'rgba(60,70,84,0)':'rgba(40,52,72,0)');
@@ -3987,9 +4041,20 @@ function trackAhead(ctx,dist0){
   const L0=[a0.x+a0.nx*e,a0.y+a0.ny*e,a0.z],R0=[a0.x-a0.nx*e,a0.y-a0.ny*e,a0.z];
   const L1=[a1.x+a1.nx*e,a1.y+a1.ny*e,a1.z],R1=[a1.x-a1.nx*e,a1.y-a1.ny*e,a1.z];
   const fade=Math.min(1,Math.max(0,1-(k1*seg)/900));
-  const base=wet>.15?[52,60,68]:[62,65,70];
+  const base=wet>.15?[58,66,74]:[70,73,78];
   const shade=Math.round(18+fade*10);
-  quad(ctx,L0,L1,R1,R0,`rgb(${base[0]-shade+10},${base[1]-shade+10},${base[2]-shade+12})`);
+  /* Asphalt is laid in strips and patched over the years; a little variation
+     along the road stops it reading as a painted plane. */
+  const grain=((Math.floor(d0/23)*2654435761)%7)-3;
+  quad(ctx,L0,L1,R1,R0,`rgb(${base[0]-shade+10+grain},${base[1]-shade+10+grain},${base[2]-shade+12+grain})`);
+  /* Rubber goes down where the cars go. The racing line is darker than the
+     road it is laid on, and it is the strongest cue for where the line is. */
+  {const rb0=lerpArr(RACE,d0)*USABLE*LAT3D, rb1=lerpArr(RACE,d1)*USABLE*LAT3D, rw=2.6;
+   quad(ctx,[a0.x+a0.nx*(rb0+rw),a0.y+a0.ny*(rb0+rw),a0.z+.002],
+            [a1.x+a1.nx*(rb1+rw),a1.y+a1.ny*(rb1+rw),a1.z+.002],
+            [a1.x+a1.nx*(rb1-rw),a1.y+a1.ny*(rb1-rw),a1.z+.002],
+            [a0.x+a0.nx*(rb0-rw),a0.y+a0.ny*(rb0-rw),a0.z+.002],
+            `rgba(24,26,30,${wet>.2?.18:.34})`);}
   /* the dry line comes back on the racing line first */
   if(wet>.1&&dry>.05){
    const rl0=lerpArr(RACE,d0)*USABLE*LAT3D,rl1=lerpArr(RACE,d1)*USABLE*LAT3D;
@@ -4023,6 +4088,25 @@ function trackAhead(ctx,dist0){
              [a0.x+a0.nx*(e+w)*sgn,a0.y+a0.ny*(e+w)*sgn,a0.z+.07],
              stripe?'#b8353c':'#e6e4dc');
    }
+  }
+ }
+ /* The hundred, fifty and twenty-five boards on the way into a heavy
+    braking zone, which is what a driver is actually looking at. */
+ for(const k of CORNERS){
+  const cd=k.frac*LENGTH;
+  const vIn=lerpArr(VPROF,cd-220), vAt=k.v;
+  if(vIn-vAt<16)continue;
+  let rel=((cd-dist0)%LENGTH+LENGTH)%LENGTH;
+  if(rel>560)continue;
+  const sgn=CIRCUIT.pitSide>0?-1:1;
+  for(const m of[100,50,25]){
+   const at=dist0+rel-m;
+   if(at-dist0<-30)continue;
+   const b=w3(at,0),o=HALFW+(scenery().runoff||3)+1.2;
+   const bx=b.x+b.nx*o*sgn, by=b.y+b.ny*o*sgn;
+   quad(ctx,[bx-b.tx*.9,by-b.ty*.9,.9],[bx+b.tx*.9,by+b.ty*.9,.9],
+            [bx+b.tx*.9,by+b.ty*.9,2.0],[bx-b.tx*.9,by-b.ty*.9,2.0],
+            m===100?'#1f7a4d':m===50?'#c8a21f':'#b8353c');
   }
  }
  /* start / finish, sector lines and the DRS zones, painted on the road */
@@ -4081,10 +4165,17 @@ function drawCar(ctx,c,dist0){
  const body=dim(col,.92*shade),side=dim(col,.58*shade),cap=dim(col,.74*shade);
  const tyre='#15161a',dark='#1b1d22';
  const near=Math.hypot(cx-cam.x,cy-cam.y,cz-cam.z);
+ /* A shadow on the road under the car. Nothing sits in a scene without one,
+    and it is the single cheapest thing that stops a car looking pasted on. */
+ if(near<160){
+  const sh=(l,w)=>[cx+fx*l+nx*w-LIGHT.x*.5,cy+fy*l+ny*w-LIGHT.y*.5,a.z+.012];
+  quad(ctx,sh(2.5,-1.0),sh(2.5,1.0),sh(-2.4,1.15),sh(-2.4,-1.15),
+       `rgba(0,0,0,${(near<60?.42:.42*(1-(near-60)/100)).toFixed(2)})`);
+ }
  /* A Formula One car is mostly air. Close up it is built properly - wheels
     standing proud of a narrow body, a nose on a raised chassis, sidepods,
     an airbox and a wing on pylons. Far enough away that none of that reads,
-    it is three boxes, because drawing fifty faces for four pixels is waste. */
+    it is three boxes, because drawing sixty faces for four pixels is waste. */
  const faces=near>95?[
   ...box(-2.30,2.10,.55,.06,.34,body,side,cap),
   ...box(-1.85,.35,.36,.34,.66,dim(col,.99*shade),dim(col,.66*shade),dark),
@@ -4092,27 +4183,34 @@ function drawCar(ctx,c,dist0){
   /* floor and the narrow survival cell */
   ...box(-2.15,1.05,.52,.04,.16,dim(col,.72*shade),dim(col,.5*shade),dark),
   ...box(-1.95,.95,.42,.16,.44,body,side,cap),
-  /* sidepods, wider and lower than the chassis */
-  ...box(-1.10,.60,.80,.14,.46,dim(col,.86*shade),dim(col,.56*shade),cap),
+  /* sidepods, wider and lower than the chassis, with an undercut */
+  ...box(-1.10,.60,.80,.20,.46,dim(col,.86*shade),dim(col,.56*shade),cap),
+  ...box(-1.15,.55,.70,.12,.22,dim(col,.5*shade),dim(col,.38*shade),dark),
   /* the nose, on the raised chassis, tapering to the wing */
   ...box(.95,2.05,.20,.26,.44,body,side,cap),
   ...box(2.00,2.34,.14,.20,.32,dim(col,.9*shade),side,cap),
-  /* front wing: wide, low, with endplates */
-  ...box(2.28,2.66,.88,.03,.13,dim(col,.8*shade),dark,dark),
+  /* front wing: two planes, wide and low, with endplates */
+  ...box(2.28,2.52,.88,.05,.11,dim(col,.8*shade),dark,dark),
+  ...box(2.44,2.68,.88,.09,.17,dim(col,.7*shade),dark,dark),
   ...box(2.24,2.70,[.84,.92],.03,.30,dark,dark,dark),
   ...box(2.24,2.70,[-.92,-.84],.03,.30,dark,dark,dark),
-  /* cockpit surround and the halo above it */
+  /* cockpit surround, the halo, and a helmet inside it */
   ...box(.30,1.00,.33,.44,.60,dim(col,.6*shade),dim(col,.42*shade),'#0d0e11'),
+  ...box(.42,.86,.21,.58,.80,'#d8d4c8','#b9b5aa','#cfcabd'),
   ...box(.32,1.24,.30,.60,.72,'#26282e','#26282e','#26282e'),
   /* airbox and engine cover running back to the wing */
   ...box(-1.55,.42,.34,.44,.78,dim(col,.99*shade),dim(col,.62*shade),dark),
   ...box(-2.05,-1.50,.30,.40,.58,dim(col,.8*shade),dim(col,.5*shade),dark),
-  /* wheels, standing proud on both sides */
+  /* wheels: a tyre with a lighter rim face, standing proud on both sides */
   ...box(1.15,2.00,[.66,1.02],.02,.68,tyre,tyre,'#2a2c31'),
   ...box(1.15,2.00,[-1.02,-.66],.02,.68,tyre,tyre,'#2a2c31'),
+  ...box(1.32,1.83,[1.02,1.06],.14,.56,'#5a5f68','#5a5f68','#5a5f68'),
+  ...box(1.32,1.83,[-1.06,-1.02],.14,.56,'#5a5f68','#5a5f68','#5a5f68'),
   ...box(-2.00,-1.15,[.68,1.04],.02,.70,tyre,tyre,'#2a2c31'),
   ...box(-2.00,-1.15,[-1.04,-.68],.02,.70,tyre,tyre,'#2a2c31'),
-  /* rear wing on its pylon, with endplates */
+  ...box(-1.82,-1.33,[1.04,1.08],.16,.58,'#5a5f68','#5a5f68','#5a5f68'),
+  ...box(-1.82,-1.33,[-1.08,-1.04],.16,.58,'#5a5f68','#5a5f68','#5a5f68'),
+  /* rear wing on its pylon, with endplates, and the rain light under it */
   ...box(-2.32,-2.06,.76,.66,1.00,dim(col,.88*shade),dark,dark),
   ...box(-2.36,-2.02,[.74,.82],.52,1.02,dark,dark,dark),
   ...box(-2.36,-2.02,[-.82,-.74],.52,1.02,dark,dark,dark),
@@ -4120,16 +4218,19 @@ function drawCar(ctx,c,dist0){
  faces.sort((u,v)=>{
   const m=q=>q.p.reduce((s2,z)=>s2+(z[0]-cam.x)*cam.fx+(z[1]-cam.y)*cam.fy+(z[2]-cam.z)*cam.fz,0);
   return m(v)-m(u);});
- for(const f of faces)quad(ctx,f.p[0],f.p[1],f.p[2],f.p[3],f.c);
+ for(const f of faces)quad(ctx,f.p[0],f.p[1],f.p[2],f.p[3],shadeFace(f.c,f.p[0],f.p[1],f.p[2]));
  const head=proj(cx,cy,cz+1.5);
  if(head&&head.d<260){
-  const sz=Math.max(7,Math.min(16,240/head.d));
-  ctx.font=`700 ${sz.toFixed(0)}px 'IBM Plex Mono',monospace`;
+  /* Labels are sized for the frame, not in absolute pixels: the same number
+     that reads well on a wide panel covers the car on a phone. */
+  const k=clamp(VW3/900,.55,1.15);
+  const sz=Math.max(6,Math.min(16,240/head.d))*k;
+  ctx.font=`700 ${Math.max(7,sz).toFixed(0)}px 'IBM Plex Mono',monospace`;
   ctx.textAlign='center';
   ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillText(String(c.id),head.x+1,head.y+1);
   ctx.fillStyle=col;ctx.fillText(String(c.id),head.x,head.y);
   if(head.d<110){
-   ctx.font=`600 ${(sz*.6).toFixed(0)}px 'IBM Plex Sans',sans-serif`;
+   ctx.font=`600 ${Math.max(6,sz*.6).toFixed(0)}px 'IBM Plex Sans',sans-serif`;
    ctx.fillStyle='rgba(237,235,227,.8)';ctx.fillText(c.code||c.name,head.x,head.y+sz*.92);
   }
  }
@@ -4150,31 +4251,56 @@ function placeCam(c){
  const a=w3(c.dist,c.lane??0);
  const lead=w3(c.dist+24,camLane*.9);
  if(view3==='onboard'){
-  const eye=[a.x+a.tx*.9,a.y+a.ty*.9,a.z+1.08];
-  const look=[lead.x,lead.y,lead.z+.75];
-  const roll=clamp(-(c.latV||0)*.035,-.07,.07);
-  smoothCam(eye,look,roll,.05,.16);
+  /* The T-camera, above and behind the airbox looking over the nose, which
+     is the shot every onboard actually is. An eye at helmet height sits so
+     close to the road that the picture is all asphalt. */
+  const eye=[a.x-a.tx*.35,a.y-a.ty*.35,a.z+1.62];
+  const ahead2=w3(c.dist+55,camLane*.75);
+  const look=[ahead2.x,ahead2.y,ahead2.z+1.05];
+  const roll=clamp(-(c.latV||0)*.030,-.06,.06);
+  smoothCam(eye,look,roll,.012,.10);
  }else if(view3==='corner'){
   /* The nearest camera position ahead of the car, at the corner it is
      coming to - which is where a trackside camera actually lives. */
+  /* The camera that is actually watching this car is the one nearest to it,
+     not the next one up the road - picking the corner ahead leaves the shot
+     half a lap long down a straight. It hands over to the next camera as the
+     car gets closer to that one. */
   const f=((c.dist%LENGTH)+LENGTH)%LENGTH/LENGTH;
   let best=null,bd=9;
   for(const k of CORNERS){
-   let d=k.frac-f; if(d<-.02)d+=1;
+   let d=Math.abs(k.frac-f); if(d>.5)d=1-d;
    if(d<bd){bd=d;best=k;}
   }
-  const cd=((best?best.frac:0)*LENGTH);
-  const p=w3(cd+18,0);
-  const side=(best&&best.frac!==undefined&&lerpArr(kcen,cd)>0)?-1:1;
-  const eye=[p.x+p.nx*side*30,p.y+p.ny*side*30,8.5];
-  smoothCam(eye,[a.x,a.y,a.z+.6],0,.30,.30);
+  /* A trackside camera stands beside the piece of road the car is on, not
+     at a corner it may be half a lap from - the road is only drawn around
+     the car, so a camera parked anywhere else watches an empty sliver. It
+     sits back up the road on the outside of whatever the car is going
+     through, and it is named for the corner nearest to it. */
+  const post=w3(c.dist-30,0);
+  const side=lerpArr(kcen,c.dist)>0?-1:1;
+  const eye=[post.x+post.nx*side*20,post.y+post.ny*side*20,6.2];
+  smoothCam(eye,[a.x,a.y,a.z+.7],0,.10,.09);
   cornerCam=best?best.n:null;
  }else{
-  const back=w3(c.dist-14.5,camLane*.9);
-  const near=w3(c.dist+7,camLane);
-  const eye=[back.x,back.y,back.z+3.6];
-  const look=[near.x*.62+lead.x*.38,near.y*.62+lead.y*.38,near.z+1.05];
-  smoothCam(eye,look,clamp(-(c.latV||0)*.02,-.05,.05),.30);
+  /* A chase camera is a point on the track a fixed distance behind the car,
+     not a point in space easing towards one. Smoothing the world position
+     lets the eye catch up under braking and end up inside the car, and lets
+     it cut the corner on the way in. Smoothing the distance along the road
+     instead keeps the offset exactly what it says it is, whatever the car
+     does. */
+  /* Distance along the road needs no smoothing - it is the integral of
+     speed and is already smooth. Filtering it only adds lag, which is what
+     let the eye drift into the car. The offset is exact; everything that
+     actually jitters is lateral, and that is damped separately. */
+  const camDist=c.dist;
+  const back=w3(camDist-11.5,camLane*.9);
+  const near=w3(camDist+7,camLane);
+  const lead2=w3(camDist+26,camLane*.9);
+  const eye=[back.x,back.y,back.z+3.1];
+  const look=[near.x*.55+lead2.x*.45,near.y*.55+lead2.y*.45,near.z+1.1];
+  /* The eye is already smooth, so the filter here only takes the edge off. */
+  smoothCam(eye,look,clamp(-(c.latV||0)*.012,-.035,.035),.012,.06);
  }
 }
 /* Smoothing has to be in seconds, not in frames. A fixed fraction per frame
@@ -4207,7 +4333,7 @@ function drawStage(){
  const ctx=stageCtx,c=sim.car(selected)||sim.cars[0];
  placeCam(c);
  ctx.clearRect(0,0,VW3,VH3);
- skyline(ctx);groundPlane(ctx);water(ctx);skylineFar(ctx);
+ skyline(ctx);stars(ctx);groundPlane(ctx);water(ctx);skylineFar(ctx);
  trackAhead(ctx,c.dist);
  trackside(ctx,c.dist);
  haze(ctx);
